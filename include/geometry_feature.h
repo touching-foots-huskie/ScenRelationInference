@@ -1,4 +1,6 @@
-#pragma once
+#ifndef GEOMETRY_FEATURE
+#define GEOMETRY_FEATURE
+
 #include <Eigen/Eigen>
 
 #include <iostream>
@@ -88,3 +90,5 @@ supporting_status | Dim:[1, N]
 void SupportingStatusV2(const Eigen::Ref<Eigen::MatrixXd>& surf_directions,
 						const Eigen::Ref<Eigen::MatrixXd>& gravity_direction,
 						Eigen::Ref<Eigen::MatrixXd> supporting_status);
+
+#endif

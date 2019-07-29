@@ -1,3 +1,5 @@
+#define CONFIGURU_IMPLEMENTATION 1
+#include "configuru.hpp"
 #include "parse_tool.h"
 #include "template_object.h"
 #include "geometry_feature.h"
@@ -8,8 +10,9 @@
 
 
 int main() {
-	/*
-	// Feature Check
+	
+    /*
+    // Feature Check
 	Eigen::MatrixXd plane_normals(3, 3);
 	plane_normals << 3.0, 1.0, 2.0,
 					 2.0, 3.0, 1.0,
@@ -43,9 +46,8 @@ int main() {
 	Eigen::MatrixXd angle_diff(3, 3);
 	Eigen::MatrixXd dist_diff(3, 3);
 
-	// test function
-	CalculateDiffPlane2Plane(plane_normals, plane_centers, 
-		angle_diff, dist_diff);
+    CalculateDiffPlane2Plane(plane_normals, plane_centers, 
+		                     angle_diff, dist_diff);
 
 	// test_2
 	CalculateDiffSurf2Surf(plane_normals, plane_centers, dist_diff);
@@ -73,18 +75,27 @@ int main() {
 		plane_boundary_points_1,
 		surf_boundary_points_1
 	);
-	*/
+     */
+	
+	
 	
 	// Template Working Check
-	Eigen::Vector3d box_size(1.0, 2.0, 3.0);
+    
+    Eigen::Vector3d box_size(1.0, 2.0, 3.0);
+    Eigen::Vector2d cylinder_size(1.0, 2.0);
 	Eigen::MatrixXd inner_transfrom(4, 4);
 	inner_transfrom << 1.0, 0.0, 0.0, 2.0,
 					   0.0, 1.0, 0.0, 3.0,
 					   0.0, 0.0, 1.0, 1.0,
 					   0.0, 0.0, 0.0, 1.0;
 	
-	configuru::Config cfg = configuru::Config::object();
-	cfg["pi"] = 3.14;
+
+    WriteBox("test_box", box_size, inner_transfrom);
+    WriteCylinder("test_surf", cylinder_size, inner_transfrom);
+    
+    // test to scene Inference
+    
+    std::cout << "template written" << std::endl;
 	return 0;
 
 }

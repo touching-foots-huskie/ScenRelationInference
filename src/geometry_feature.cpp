@@ -1,9 +1,9 @@
 #include "geometry_feature.h"
 
 void CalculateDiffPlane2Plane(const Eigen::Ref<Eigen::MatrixXd>& plane_normals,
-	const Eigen::Ref<Eigen::MatrixXd>& plane_centeral_points,
-	Eigen::Ref<Eigen::MatrixXd> angle_diff,
-	Eigen::Ref<Eigen::MatrixXd> dist_diff) {
+                              const Eigen::Ref<Eigen::MatrixXd>& plane_centeral_points,
+                              Eigen::Ref<Eigen::MatrixXd> angle_diff,
+                              Eigen::Ref<Eigen::MatrixXd> dist_diff) {
 
 	int D = plane_normals.rows();
 	int N = plane_normals.cols();
@@ -28,9 +28,10 @@ void CalculateDiffPlane2Plane(const Eigen::Ref<Eigen::MatrixXd>& plane_normals,
 };
 
 void CalculateDiffSurf2Surf(const Eigen::Ref<Eigen::MatrixXd>& surf_directions,
-	const Eigen::Ref<Eigen::MatrixXd>& surf_centeral_points,
-	Eigen::Ref<Eigen::MatrixXd> dist_diff) {
-	int D = surf_directions.rows();
+	                        const Eigen::Ref<Eigen::MatrixXd>& surf_centeral_points,
+	                        Eigen::Ref<Eigen::MatrixXd> dist_diff) {
+	
+    int D = surf_directions.rows();
 	int N = surf_directions.cols();
 
 	Eigen::MatrixXd rep_vectors_1 = surf_centeral_points.replicate(N, 1);
@@ -63,12 +64,13 @@ void CalculateDiffSurf2Surf(const Eigen::Ref<Eigen::MatrixXd>& surf_directions,
 };
 
 void CalculateDiffPlane2Surf(const Eigen::Ref<Eigen::MatrixXd>& plane_normals,
-	const Eigen::Ref<Eigen::MatrixXd>& surf_directions,
-	const Eigen::Ref<Eigen::MatrixXd>& plane_centeral_points,
-	const Eigen::Ref<Eigen::MatrixXd>& surf_centeral_points,
-	Eigen::Ref<Eigen::MatrixXd> angle_diff,
-	Eigen::Ref<Eigen::MatrixXd> dist_diff) {
-	int D = plane_normals.rows();
+                             const Eigen::Ref<Eigen::MatrixXd>& surf_directions,
+                             const Eigen::Ref<Eigen::MatrixXd>& plane_centeral_points,
+                             const Eigen::Ref<Eigen::MatrixXd>& surf_centeral_points,
+                             Eigen::Ref<Eigen::MatrixXd> angle_diff,
+                             Eigen::Ref<Eigen::MatrixXd> dist_diff) {
+	
+    int D = plane_normals.rows();
 	int N1 = plane_normals.cols();
 	int N2 = surf_directions.cols();
 	angle_diff = plane_normals.transpose() * surf_directions;
@@ -96,9 +98,9 @@ start direction and end direction and distinguished by r-clock-wise
 */
 
 bool SurfaceClipCheck(const Eigen::Ref<Eigen::Vector3d>& surf_direction,
-	const Eigen::Ref<Eigen::Vector3d>& start_direction,
-	const Eigen::Ref<Eigen::Vector3d>& end_direction,
-	const Eigen::Ref<Eigen::Vector3d>& normal_direction) {
+                      const Eigen::Ref<Eigen::Vector3d>& start_direction,
+                      const Eigen::Ref<Eigen::Vector3d>& end_direction,
+                      const Eigen::Ref<Eigen::Vector3d>& normal_direction) {
 
 	Eigen::Vector3d startp90 = surf_direction.cross(start_direction);
 	Eigen::Vector3d endp90 = surf_direction.cross(endp90);
@@ -125,7 +127,7 @@ bool SurfaceClipCheck(const Eigen::Ref<Eigen::Vector3d>& surf_direction,
 };
 
 bool SpatialMatchingCheck(const Eigen::Ref<Eigen::MatrixXd>& boundary_points_1,
-	const Eigen::Ref<Eigen::MatrixXd>& boundary_points_2) {
+	                      const Eigen::Ref<Eigen::MatrixXd>& boundary_points_2) {
 
 	int K1 = boundary_points_1.cols();
 	int K2 = boundary_points_2.cols();
@@ -179,7 +181,7 @@ bool SpatialMatchingCheck(const Eigen::Ref<Eigen::MatrixXd>& boundary_points_1,
 This function is only used in surface to surface
 */
 bool SpatialMatchingCheckV2(const Eigen::Ref<Eigen::MatrixXd>& boundary_points_1,
-	const Eigen::Ref<Eigen::MatrixXd>& boundary_points_2) {
+	                        const Eigen::Ref<Eigen::MatrixXd>& boundary_points_2) {
 	// TODO: Add surface clip check here
 
 	bool matched = true;
@@ -246,10 +248,10 @@ boundary_points_2 : boundary points for surf | Dim:[D, K2]
 Usage : Plane2Plane [The first feature should at least have three points].
 */
 bool SpatialMatchingCheckV3(const Eigen::Ref<Eigen::Vector3d>& surf_direction,
-	const Eigen::Ref<Eigen::Vector3d>& start_direction,
-	const Eigen::Ref<Eigen::Vector3d>& end_direction,
-	const Eigen::Ref<Eigen::MatrixXd>& boundary_points_1,
-	const Eigen::Ref<Eigen::MatrixXd>& boundary_points_2) {
+	                        const Eigen::Ref<Eigen::Vector3d>& start_direction,
+	                        const Eigen::Ref<Eigen::Vector3d>& end_direction,
+	                        const Eigen::Ref<Eigen::MatrixXd>& boundary_points_1,
+	                        const Eigen::Ref<Eigen::MatrixXd>& boundary_points_2) {
 
 	int K1 = boundary_points_1.cols();
 	int K2 = boundary_points_2.cols();
@@ -301,10 +303,10 @@ projection_norms | Dim:[D, N2]
 
 */
 bool GravitySupportCheck(const Eigen::Ref<Eigen::MatrixXd>& boundary_points,
-	const Eigen::Ref<Eigen::MatrixXd>& gravity_center,
-	const Eigen::Ref<Eigen::MatrixXd>& projection_norms) {
-	Eigen::MatrixXd projected_centers = gravity_center.transpose() * projection_norms;  // [1, N2]
-	Eigen::MatrixXd projected_points = boundary_points.transpose() * projection_norms;  // [N1, N2]
+	                     const Eigen::Ref<Eigen::MatrixXd>& gravity_center,
+	                     const Eigen::Ref<Eigen::MatrixXd>& projection_norms) {
+	                     Eigen::MatrixXd projected_centers = gravity_center.transpose() * projection_norms;  // [1, N2]
+	                     Eigen::MatrixXd projected_points = boundary_points.transpose() * projection_norms;  // [N1, N2]
 
 	int N2 = projection_norms.cols();
 	for (int i = 0; i < N2; i++) {
@@ -326,9 +328,9 @@ gravity_direction | Dim:[D, 1]
 supporting_status | Dim:[1, N]
 */
 void SupportingStatus(const Eigen::Ref<Eigen::MatrixXd>& plane_normals,
-	const Eigen::Ref<Eigen::MatrixXd>& gravity_direction,
-	Eigen::Ref<Eigen::MatrixXd> supporting_status) {
-
+                      const Eigen::Ref<Eigen::MatrixXd>& gravity_direction,
+                      Eigen::Ref<Eigen::MatrixXd> supporting_status) {
+                      
 	supporting_status = gravity_direction.transpose() * plane_normals;  // Dim:[1, N]
 
 	for (int i = 0; i < supporting_status.cols(); i++) {
@@ -358,9 +360,10 @@ gravity_direction | Dim:[D, 1]
 supporting_status | Dim:[1, N]
 */
 void SupportingStatusV2(const Eigen::Ref<Eigen::MatrixXd>& surf_directions,
-	const Eigen::Ref<Eigen::MatrixXd>& gravity_direction,
-	Eigen::Ref<Eigen::MatrixXd> supporting_status) {
-	supporting_status = gravity_direction.transpose() * surf_directions;
+	                    const Eigen::Ref<Eigen::MatrixXd>& gravity_direction,
+	                    Eigen::Ref<Eigen::MatrixXd> supporting_status) {
+	
+    supporting_status = gravity_direction.transpose() * surf_directions;
 
 	double surf_threshold = 1.0 - support_direction_threshold;
 	// Supporting Feature

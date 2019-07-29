@@ -1,9 +1,12 @@
-#ifndef PARSE_TOOL
-#define PARSE_TOOL
+#include "parse_tool.h"
 
-#include "configuru.hpp"
-
-#include <Eigen/Eigen>
+std::string GetCurrentWorkingDir( void ) {
+    // current working directory
+    char buff[FILENAME_MAX];
+    GetCurrentDir( buff, FILENAME_MAX );
+    std::string current_working_dir(buff);
+    return current_working_dir;
+};
 
 // Parse Matrix in Transpose version
 Eigen::MatrixXd MatrixParseT(configuru::Config& config_array) {
@@ -54,5 +57,3 @@ void RemoveMatrix(Eigen::MatrixXd& original_matrix, int start_index, int cols_nu
 	original_matrix.resize(upper_matrix.rows(), upper_matrix.cols() + lower_matrix.cols());
 	original_matrix << upper_matrix, lower_matrix;
 };
-#endif // !PARSE_TOOL
-
