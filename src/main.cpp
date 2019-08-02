@@ -4,6 +4,7 @@
 #include "template_object.h"
 #include "geometry_feature.h"
 #include "pose_data_parse.h"
+#include "scene_inference.h"
 
 #include <iostream>
 
@@ -15,13 +16,49 @@ int main() {
     PoseDataParse pose_data_parser;
 
     std::string current_path = GetCurrentWorkingDir();
-    std::string file_name = "0630.csv";
+    std::string file_name = "05152.csv";
     pose_data_parser.ReadData(current_path + "/data/" + file_name);
     std::vector<int> object_ids = pose_data_parser.GetIds();
     
     // construct objects based on file
     // get register config
+    std::string register_config_path = current_path + "/models/object_register.json";
+    configuru::Config register_cfg = configuru::parse_file(register_config_path, configuru::JSON);
+	
+    // get label config
+    std::string label_config_path = current_path + "/models/object_label.json";
+    configuru::Config label_cfg = configuru::parse_file(label_config_path, configuru::JSON);
     
-	return 0;
+    // Initial object_register_file
+    SceneInference scene_inference(register_config_path);
+
+    // Add objects
+    for(auto it : object_ids){
+        std::string object_name = (std::string) label_cfg[std::to_string(it)]["name"];
+        scene_inference.AddObject(it, object_name);
+        
+        // update pose data
+        Eigen::MatrixXd object_pose = pose_data_parser.GetData(it);
+        scene_inference.UpdateObjectPose(it, object_pose);
+
+        if(it == 0){
+            // If the object is table & update gravity pose
+            scene_inference.SetGravity(object_pose);
+            std::cout << "Gravity Pose Update." << std::endl;
+        }
+            
+        // log display
+        std::cout << "Label : " << it << " : " << object_name << std::endl;
+    }
+
+    // Inference geometry relationship
+    scene_inference.CalculateDiff();
+    scene_inference.FeatureSupportingRelation();
+
+    scene_inference.RelationshipInference();
+
+    scene_inference.DisplayRelationship();
+    scene_inference.LogSceneStatus();
+    return 0;
 
 }

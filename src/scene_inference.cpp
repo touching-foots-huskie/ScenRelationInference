@@ -8,27 +8,33 @@ void ProjectionFeatureManager::AddFeature(int feature_id,
     gravity_center_ = rotation_transform_ * gravity_center_ + transition_transform_;
 
 	// pairs 1
+    int N1 = feature_boundary_points_1.cols();
+
 	Eigen::MatrixXd projected_boundary_points_1 = rotation_transform_ * feature_boundary_points_1
-		+ transition_transform_;
-	int N1 = projected_boundary_points_1.cols();
+		+ transition_transform_.replicate(1, N1);
+	
 	projected_boundary_points_1.block(2, 0, 1, N1) *= 0;  // Remove z axis
 
 	// pairs 2
+    int N2 = feature_boundary_points_2.cols();
+
 	Eigen::MatrixXd projected_boundary_points_2 = rotation_transform_ * feature_boundary_points_2
-		+ transition_transform_;
-	int N2 = projected_boundary_points_2.cols();
+		+ transition_transform_.replicate(1, N2);
+	
 	projected_boundary_points_2.block(2, 0, 1, N2) *= 0;  // Remove z axis
 
 	// add index into feature index
-	points_index_feature_[feature_id].push_back(boundary_points_.cols());
-	points_index_feature_[feature_id].push_back(N1 + N2);
+	points_1_index_feature_[feature_id].push_back(boundary_points_1_.cols());
+	points_1_index_feature_[feature_id].push_back(N1);
+    points_2_index_feature_[feature_id].push_back(boundary_points_2_.cols());
+	points_2_index_feature_[feature_id].push_back(N2);
 
 	norms_index_feature_[feature_id].push_back(projection_norms_.cols());
 	norms_index_feature_[feature_id].push_back(N1 + N2);
 
 	// add the proected data into projected boundary points & edges
-	ConcatMatrix(boundary_points_, projected_boundary_points_1);
-	ConcatMatrix(boundary_points_, projected_boundary_points_2);
+	ConcatMatrix(boundary_points_1_, projected_boundary_points_1);
+	ConcatMatrix(boundary_points_2_, projected_boundary_points_2);
 
 	// z_axis is this, because this is what gravity transform is doing
 	Eigen::Vector3d z_axis(0, 0, 1);
@@ -69,34 +75,44 @@ void ProjectionFeatureManager::AddFeature(int feature_id,
 
 void ProjectionFeatureManager::RemoveFeature(int feature_id) {
 	// Remove feature id is to remove related feature
-	int points_start_index = points_index_feature_[feature_id][0];
-	int points_feature_num = points_index_feature_[feature_id][1];
+	int points_1_start_index = points_1_index_feature_[feature_id][0];
+	int points_1_feature_num = points_1_index_feature_[feature_id][1];
+    int points_2_start_index = points_2_index_feature_[feature_id][0];
+	int points_2_feature_num = points_2_index_feature_[feature_id][1];
 
 	int norms_start_index = norms_index_feature_[feature_id][0];
 	int norms_feature_num = norms_index_feature_[feature_id][1];
 
 	// make a copy first
-	copy_boundary_points_ = boundary_points_;
+	copy_boundary_points_1_ = boundary_points_1_;
+    copy_boundary_points_2_ = boundary_points_2_;
 	copy_projection_norms_ = projection_norms_;
 
 	// Remove then
-	RemoveMatrix(boundary_points_, points_start_index, points_feature_num);
+	RemoveMatrix(boundary_points_1_, points_1_start_index, points_1_feature_num);
+    RemoveMatrix(boundary_points_2_, points_2_start_index, points_2_feature_num);
 	RemoveMatrix(projection_norms_, norms_start_index, norms_feature_num);
 
-	points_index_feature_.erase(feature_id);
+	points_1_index_feature_.erase(feature_id);
+    points_2_index_feature_.erase(feature_id);
 	norms_index_feature_.erase(feature_id);
 };
 
 void ProjectionFeatureManager::RecoverLastRemove() {
-	boundary_points_ = copy_boundary_points_;
+    // TODO: if we need to add feature index back
+    // Seems needless
+	boundary_points_1_ = copy_boundary_points_1_;
+    boundary_points_2_ = copy_boundary_points_2_;
 	projection_norms_ = copy_projection_norms_;
 };
 
 bool ProjectionFeatureManager::SupportingStatus() {
 	// exam if current points & normals can support gravity center
-	bool supported = GravitySupportCheck(boundary_points_,
+	bool supported_1 = GravitySupportCheck(boundary_points_1_,
 		gravity_center_, projection_norms_);
-	return supported;
+    bool supported_2 = GravitySupportCheck(boundary_points_2_,
+		gravity_center_, projection_norms_);
+	return (supported_1 && supported_2);
 };
 
 SceneInference::SceneInference(std::string object_register_file)
@@ -107,6 +123,9 @@ SceneInference::SceneInference(std::string object_register_file)
 
 	object_register_file_ = object_register_file;
 	object_register_config_ = configuru::parse_file(object_register_file_, configuru::JSON);
+
+    // file path
+    current_working_path_ = GetCurrentWorkingDir();
 };
 
 bool SceneInference::IsObjectIn(int object_id) {
@@ -121,45 +140,69 @@ void SceneInference::AddObject(int object_id, std::string object_name) {
 	num_of_object_++;
 	current_object_id_ = object_id;
 	object_deprecated_[object_id] = false;  // Not deprecated
+    object_names_[object_id] = object_name;
 
-	std::string object_config_file = (std::string) object_register_config_[object_name];
-	configuru::Config geometry_config = configuru::parse_file(object_config_file,
+	std::string object_config_file = current_working_path_ + "/models/" + 
+                                    (std::string) object_register_config_[object_name];
+	
+    configuru::Config geometry_config = configuru::parse_file(object_config_file,
 		configuru::JSON);
 
 	object_name = (std::string) geometry_config["object_name"];
-    // 
-	Eigen::MatrixXd  gravity_center = VetorParse(geometry_config["gravity_center"]);
-	object_gravity_centers_[current_object_id_] = gravity_center;
 
     // Inner Transform
-    object_inner_transfrom_[object_id] = MatrixParseT(geometry_config["inner_transfrom"]);
+    object_inner_transform_[object_id] = MatrixParse(geometry_config["inner_transform"]);
+    Eigen::MatrixXd rotation_matrix = object_inner_transform_[object_id].block(0, 0, 3, 3);
+    Eigen::MatrixXd transition_matrix = object_inner_transform_[object_id].block(0, 3, 3, 1);
 
-	// Plane
-	configuru::Config plane_config = geometry_config["plane_feature"];
-	AddPlaneFeature(plane_config);
+    // gravity center
+	Eigen::MatrixXd  gravity_center = VetorParse(geometry_config["gravity_center"]);
+	object_gravity_centers_[object_id] = rotation_matrix * gravity_center 
+        + transition_matrix;
 
-	// CySurf
-	configuru::Config surf_config = geometry_config["cysurf_feature"];
-	AddSurfFeature(surf_config);
+	// Add Plane if plane in configuration 
+    if(geometry_config.has_key("plane_feature")){
+        configuru::Config plane_config = geometry_config["plane_feature"];
+	    AddPlaneFeature(plane_config);
+    }
+	
+    // Surf
+    if(geometry_config.has_key("surf_feature")){
+        configuru::Config surf_config = geometry_config["surf_feature"];
+	    AddSurfFeature(surf_config);
+    }
 
 	// initialize object pose
     object_poses_[object_id] = Eigen::MatrixXd::Identity(4, 4);
 };
 
 void SceneInference::AddPlaneFeature(configuru::Config& plane_config) {
-	Eigen::MatrixXd plane_normal_object = MatrixParseT(plane_config["plane_normals"]);
-	ConcatMatrix(plane_normals_, plane_normal_object);
+	
+    Eigen::MatrixXd rotation_transform = object_inner_transform_[current_object_id_].block(0, 0, 3, 3);
+    Eigen::MatrixXd transition_transform = object_inner_transform_[current_object_id_].block(0, 3, 3, 1);
 
+    Eigen::MatrixXd plane_normal_object = MatrixParseT(plane_config["plane_normals"]);
+	
+    // plane normal
+    int num_of_plane_object = plane_normal_object.cols();
+    plane_normal_object = rotation_transform * plane_normal_object;
+    ConcatMatrix(plane_normals_, plane_normal_object);
+
+    // plane center
 	Eigen::MatrixXd plane_center_object = MatrixParseT(plane_config["plane_centers"]);
+    plane_center_object = rotation_transform * plane_center_object +
+        transition_transform.replicate(1, num_of_plane_object);
 	ConcatMatrix(plane_central_points_, plane_center_object);
 
+    // plane boundary points
 	Eigen::MatrixXd plane_boundary_points = MatrixParseT(plane_config["plane_boundary_points"]);
-	ConcatMatrix(plane_boundary_points_, plane_boundary_points);
+    plane_boundary_points = rotation_transform * plane_boundary_points +
+        transition_transform.replicate(1, num_of_plane_object * 4);
+    ConcatMatrix(plane_boundary_points_, plane_boundary_points);
 
-	int num_of_plane_obejct = plane_normal_object.cols();
 	plane_feature_index_object_[current_object_id_].clear();
 
-	for (unsigned int index = num_of_plane_; index < (num_of_plane_ + num_of_plane_obejct); index++) {
+	for (unsigned int index = num_of_plane_; index < (num_of_plane_ + num_of_plane_object); index++) {
 		// assert
 		assert(feature_deprecated_["plane"].size() == index);
 		feature_deprecated_["plane"].push_back(false);
@@ -167,7 +210,7 @@ void SceneInference::AddPlaneFeature(configuru::Config& plane_config) {
 		plane_feature_index_object_[current_object_id_].push_back(index);
 
 	}
-	num_of_plane_ += num_of_plane_obejct;
+	num_of_plane_ += num_of_plane_object;
 
 	for (auto v : plane_config["plane_approximated"].as_array()) {
 		feature_approximated_["plane"].push_back((bool)v);
@@ -175,22 +218,35 @@ void SceneInference::AddPlaneFeature(configuru::Config& plane_config) {
 };
 
 void SceneInference::AddSurfFeature(configuru::Config& surf_config) {
+    Eigen::MatrixXd rotation_transform = object_inner_transform_[current_object_id_].block(0, 0, 3, 3);
+    Eigen::MatrixXd transition_transform = object_inner_transform_[current_object_id_].block(0, 3, 3, 1);
+
+    // surf directions
 	Eigen::MatrixXd surf_directions = MatrixParseT(surf_config["surf_directions"]);
+    int num_of_surf_object = surf_directions.cols();
+    surf_directions = rotation_transform * surf_directions;
 	ConcatMatrix(surf_directions_, surf_directions);
+    
+    // surf centers
+	Eigen::MatrixXd surf_centeral_points = MatrixParseT(surf_config["surf_centers"]);
+    surf_centeral_points = rotation_transform * surf_centeral_points + 
+        transition_transform.replicate(1, num_of_surf_object);
+	ConcatMatrix(surf_cenetral_points_, surf_centeral_points);
 
-	Eigen::MatrixXd surf_cenetral_points = MatrixParseT(surf_config["surf_centers"]);
-	ConcatMatrix(surf_cenetral_points_, surf_cenetral_points);
-
+    // surf boundary directions
 	Eigen::MatrixXd surf_boundary_directions = MatrixParseT(surf_config["surf_boundary_directions"]);
+    surf_boundary_directions = rotation_transform * surf_boundary_directions;
 	ConcatMatrix(surf_boundary_directions_, surf_boundary_directions);
 
+    // surf boundary points
 	Eigen::MatrixXd surf_boundary_points = MatrixParseT(surf_config["surf_boundary_points"]);
-	ConcatMatrix(surf_boundary_points_, surf_boundary_points);
+	surf_boundary_points = rotation_transform * surf_boundary_points
+         + transition_transform.replicate(1, 2 * num_of_surf_object);
+    ConcatMatrix(surf_boundary_points_, surf_boundary_points);
 
 	Eigen::MatrixXd surf_radius = VetorParse(surf_config["surf_radius"]);
-	ConcatMatrix(surf_radius_, surf_radius);
-
-	int num_of_surf_object = surf_directions.cols();
+    Eigen::MatrixXd surf_radius_t = surf_radius.transpose();
+	ConcatMatrix(surf_radius_, surf_radius_t);
 
 	surf_feature_index_object_[current_object_id_].clear();
 	for (unsigned int index = num_of_surf_; index < (num_of_surf_ + num_of_surf_object); index++) {
@@ -238,9 +294,10 @@ void SceneInference::UpdateObjectPose(int object_id, const Eigen::Ref<Eigen::Mat
 		return;
 	}
 	else {
-		Eigen::Matrix3d rotation_matrix = relative_pose.block(0, 0, 3, 3);
-		Eigen::Matrix3d transition_matrix = relative_pose.block(0, 3, 3, 1);
-		// plane
+		Eigen::MatrixXd rotation_matrix = relative_pose.block(0, 0, 3, 3);
+		Eigen::MatrixXd transition_matrix = relative_pose.block(0, 3, 3, 1);
+		
+        // plane
 		for (auto index : plane_feature_index_object_[object_id]) {
 			plane_normals_.block(0, index, 3, 1) =
 				rotation_matrix * plane_normals_.block(0, index, 3, 1);
@@ -250,6 +307,7 @@ void SceneInference::UpdateObjectPose(int object_id, const Eigen::Ref<Eigen::Mat
 				plane_boundary_points_.block(0, 4 * index, 3, 4) + transition_matrix.replicate(1, 4);
 		}
 
+        // surf
 		for (auto index : surf_feature_index_object_[object_id]) {
 			surf_directions_.block(0, index, 3, 1) =
 				rotation_matrix * surf_directions_.block(0, index, 3, 1);
@@ -261,27 +319,61 @@ void SceneInference::UpdateObjectPose(int object_id, const Eigen::Ref<Eigen::Mat
 			surf_boundary_points_.block(0, 2 * index, 3, 2) = rotation_matrix *
 				surf_boundary_points_.block(0, 2 * index, 3, 2) + transition_matrix.replicate(1, 2);
 		}
+
+        // gravity center
+        object_gravity_centers_[object_id] = rotation_matrix * object_gravity_centers_[object_id]
+            + transition_matrix;
 	}
+};
+
+/*
+Currently, we naively think that the table pose is the gravity pose
+ */
+void SceneInference::SetGravity(const Eigen::Ref<Eigen::MatrixXd>& gravity_pose){
+    // TODO: How to detect gravity pose & gravity direction
+    // TODO: Get gravity from pose_estimation
+    gravity_pose_ = gravity_pose;
+    Eigen::Vector4d global_z_axis(0, 0, -1, 0);
+    gravity_direction_ = (gravity_pose_ * global_z_axis).head(3);
 };
 
 /* 
 Calculate Difference between two different feature
 */
 void SceneInference::CalculateDiff() {
-	// Plane2Plane
+	// Initilize Eigen matrix before calculation
+    angle_diff_plane2plane_ = Eigen::MatrixXd::Zero(num_of_plane_, num_of_plane_);
+    dist_diff_plane2plane_ = Eigen::MatrixXd::Zero(num_of_plane_, num_of_plane_);
+    angle_diff_plane2surf_ = Eigen::MatrixXd::Zero(num_of_plane_, num_of_surf_);
+    dist_diff_plane2surf_ = Eigen::MatrixXd::Zero(num_of_plane_, num_of_surf_);
+    dist_diff_surf2surf_ = Eigen::MatrixXd::Zero(num_of_surf_, num_of_surf_);
+    plane_feature_supporting_ = Eigen::MatrixXd::Zero(1, num_of_plane_);
+    surf_feature_supporting_ = Eigen::MatrixXd::Zero(1, num_of_surf_);
+
+    // Plane2Plane
 	CalculateDiffPlane2Plane(plane_normals_, plane_central_points_,
 		angle_diff_plane2plane_, dist_diff_plane2plane_);
+
+    DisplayMatrix(dist_diff_plane2plane_.block(0, 0, 1, num_of_plane_), "Dist Plane2Plane");
+    DisplayMatrix(angle_diff_plane2plane_.block(0, 0, 1, num_of_plane_), "Angle Plane2Plane");
 
 	// Plane2Surf
 	CalculateDiffPlane2Surf(plane_normals_, surf_directions_, plane_central_points_,
 		surf_cenetral_points_, angle_diff_plane2surf_, dist_diff_plane2surf_);
 	
+    /*
+    // TODO: delete it
+    DisplayMatrix(dist_diff_plane2surf_.block(7, 0, 6, num_of_surf_), "Dist Plane2Surf");
+    DisplayMatrix(angle_diff_plane2surf_.block(7, 0, 6, num_of_surf_), "Angle Plane2Surf");
+     */
+    
+
 	// Surf2Surf
-	CalculateDiffSurf2Surf(surf_cenetral_points_, surf_cenetral_points_, dist_diff_surf2surf_);
+	CalculateDiffSurf2Surf(surf_directions_, surf_cenetral_points_, dist_diff_surf2surf_);
 
 	// Calculate the Supportting Result
-	SupportingStatus(plane_normals_, plane_feature_supporting_, gravity_direction_);
-	SupportingStatusV2(surf_directions_, surf_feature_supporting_, gravity_direction_);
+	SupportingStatus(plane_normals_, gravity_direction_, plane_feature_supporting_);
+	SupportingStatusV2(surf_directions_, gravity_direction_, surf_feature_supporting_);
 
 };
 
@@ -294,7 +386,7 @@ void SceneInference::FeatureSupportingRelation() {
 	feature_supporting_ = Eigen::MatrixXd::Zero((num_of_plane_ + num_of_surf_),
 		(num_of_plane_ + num_of_surf_));
 
-	// Plane2Plane
+	// Plane2Plane : i & j are global feature index
 	for (int i = 0; i < num_of_plane_; i++) {
 		for (int j = i + 1; j < num_of_plane_; j++) {
 			// first judge if we need to do this check
@@ -345,7 +437,7 @@ void SceneInference::FeatureSupportingRelation() {
 		}
 	}
 
-	// Plane2Surf
+	// Plane2Surf : Surface Contact
 	for (int i = 0; i < num_of_plane_; i++) {
 		for (int j = 0; j < num_of_surf_; j++) {
 			// first judge if we need to do this check
@@ -372,12 +464,15 @@ void SceneInference::FeatureSupportingRelation() {
 			}
 
 			if (abs(dist_diff_plane2surf_(i, j) - surf_radius_(j)) < dist_threshold) {
-				if (angle_diff_plane2plane_(i, j) < angular_threshold) {
+				if (angle_diff_plane2surf_(i, j) < angular_threshold) {
 					// If distance obey threshold, exam space consistency
+                    Eigen::Vector3d this_plane_normal = plane_normals_.block(0, i, 3, 1);
                     Eigen::Vector3d this_surf_direction = surf_directions_.block(0, j, 3, 1);
-					Eigen::Vector3d this_start_direction = surf_boundary_directions_.block(0, 2 * j + 1, 3, 1);
+					Eigen::Vector3d this_start_direction = surf_boundary_directions_.block(0, 2 * j, 3, 1);
                     Eigen::Vector3d this_end_direction = surf_boundary_directions_.block(0, 2 * j + 1, 3, 1);
+                    
                     bool spatial_consistency = SpatialMatchingCheckV3(
+                                                this_plane_normal,
                                                 this_surf_direction,
                                                 this_start_direction,
                                                 this_end_direction,
@@ -388,15 +483,15 @@ void SceneInference::FeatureSupportingRelation() {
 						if (plane_feature_supporting_(i) == 1 &&
 							surf_feature_supporting_(j) == 1) {
 							// i supported j
-							feature_supporting_(i, j) = 1.0;
-							feature_supporting_(j, i) = -1.0;
+							feature_supporting_(i, num_of_plane_ + j) = 1.0;
+							feature_supporting_(num_of_plane_ + j, i) = -1.0;
 						}
 						else if (plane_feature_supporting_(i) == -1 &&
 							surf_feature_supporting_(j) == 1) {
 
 							// j supported i
-							feature_supporting_(j, i) = 1.0;
-							feature_supporting_(i, j) = -1.0;
+							feature_supporting_(num_of_plane_ + j, i) = 1.0;
+							feature_supporting_(i, num_of_plane_ + j) = -1.0;
 						}
 					}
 				}
@@ -407,7 +502,7 @@ void SceneInference::FeatureSupportingRelation() {
 
 	// Surf2Surf
 	for (int i = 0; i < num_of_surf_; i++) {
-		for (int j = 0; j < num_of_surf_; j++) {
+		for (int j = i + 1; j < num_of_surf_; j++) {
 			// first judge if we need to do this check
 			bool no_contact = false;
 			if (feature_deprecated_["surf"][i] || feature_deprecated_["surf"][j]) {
@@ -434,8 +529,9 @@ void SceneInference::FeatureSupportingRelation() {
 				< dist_threshold) {
 				// Maybe in the future, I can do more detailed analysis
 				bool spatial_consistency = SpatialMatchingCheckV2(
-					surf_boundary_points_.block(0, 2 * i, 3, 1),
-					surf_boundary_points_.block(0, 2 * j, 3, 1));
+					surf_boundary_points_.block(0, 2 * i, 3, 2),
+					surf_boundary_points_.block(0, 2 * j, 3, 2));
+
 				if (spatial_consistency) {
 					if (surf_feature_supporting_(i) == 1 && surf_feature_supporting_(j) == 1) {
 						Eigen::Vector3d this_edge = surf_directions_.block(0, i, 3, 1);
@@ -450,23 +546,25 @@ void SceneInference::FeatureSupportingRelation() {
 						double direction_j2i = normal_direction * (vector_j2i.dot(inner_normal));
 						if (direction_j2i > 0) {
 							// j upper, i lower : j supported by i
-							feature_supporting_(j, i) = 1.0;
-							feature_supporting_(i, j) = -1.0;
+							feature_supporting_(j + num_of_plane_, i + num_of_plane_) = 1.0;
+							feature_supporting_(i + num_of_plane_, j + num_of_plane_) = -1.0;
 						}
 						else {
 							// i supported j
-							feature_supporting_(j, i) = -1.0;
-							feature_supporting_(i, j) = 1.0;
+							feature_supporting_(j + num_of_plane_, i + num_of_plane_) = -1.0;
+							feature_supporting_(i + num_of_plane_, j + num_of_plane_) = 1.0;
 						}
 					}
 				}
 			}
 		}
 	}
+
+    DisplayMatrix(feature_supporting_, "Feature Supporting");
 };
 
 bool SceneInference::ObjectSupportStatus(int object_id, 
-	std::map<int, std::pair<int, int> >& id2feature) {
+	                                     std::map<int, std::pair<int, int> >& id2feature) {
 	// Exam plane first
 	// Construct a feature manager to manage the feature 
 	ProjectionFeatureManager project_feature_manager(object_gravity_centers_[object_id],
@@ -501,6 +599,7 @@ bool SceneInference::ObjectSupportStatus(int object_id,
 					// stop loop in advance
 					i = plane_feature_index_object_[object_id].size();
 					j = num_of_plane_;
+                    break;
 				}
 			}
 		}
@@ -515,6 +614,7 @@ bool SceneInference::ObjectSupportStatus(int object_id,
 				// if fully supported, then directy quit loop
 				i = plane_feature_index_object_[object_id].size();
 				j = num_of_plane_ + num_of_surf_;
+                break;
 			}
 
 			if (feature_supporting_(plane_index, j) == 1) {
@@ -545,6 +645,7 @@ bool SceneInference::ObjectSupportStatus(int object_id,
 				// if fully supported, then directy quit loop
 				i = surf_feature_index_object_[object_id].size();
 				j = num_of_plane_;
+                break;
 			}
 
 			if (feature_supporting_(num_of_plane_ + surf_index, j) == 1) {
@@ -574,6 +675,7 @@ bool SceneInference::ObjectSupportStatus(int object_id,
 				// if fully supported, then directy quit loop
 				i = surf_feature_index_object_[object_id].size();
 				j = num_of_plane_ + num_of_surf_;
+                break;
 			}
 
 			if (feature_supporting_(num_of_plane_ + surf_index, j) == 1) {
@@ -624,7 +726,10 @@ void SceneInference::RelationshipInference() {
 		if (!object.second) {
 			// if object is not deprecated, then check its relationship
 			std::map<int, std::pair<int, int> > relationship_object;
-			ObjectSupportStatus(object.first, relationship_object);
+			bool supported_status = ObjectSupportStatus(object.first, relationship_object);
+
+            std::cout << "Supported Status of " << object_names_[object.first] << " : ";
+            std::cout << object.first << " is " << supported_status << std::endl; 
 			std::vector<std::pair<int, int> > relationships;
 			object_relationship_[object.first] = relationships;
 			for (auto supports : relationship_object) {
@@ -637,28 +742,78 @@ void SceneInference::RelationshipInference() {
 void SceneInference::DisplayRelationship(){
     for(auto object_relationship : object_relationship_){
         int object_id = object_relationship.first;
+        if(object_deprecated_[object_id]){
+            continue;
+        }
         std::cout << " --------------------- " << std::endl;
         std::cout << "Object : " << object_names_[object_id] << " : "
                   << object_id << std::endl;
 
         for(auto feature : object_relationship.second){
             if(feature.first >= num_of_plane_){
-                std::cout << "surf : " << feature.first;
+                std::cout << "surf " << feature.first << " of ";
+                int feature_object_id = surf_feature2id[feature.first - num_of_plane_];
+                std::cout << object_names_[feature_object_id] << ", ";
             }
             else{
-                std::cout << "plane : " << feature.first;
+                std::cout << "plane " << feature.first << " of ";
+                int feature_object_id = plane_feature2id[feature.first];
+                std::cout << object_names_[feature_object_id] << ", ";
             }
 
             std::cout << " | ";
 
             if(feature.second >= num_of_plane_){
-                std::cout << "surf : " << feature.second;
+                std::cout << "surf " << feature.second << " of ";
+                int feature_object_id = surf_feature2id[feature.second - num_of_plane_];
+                std::cout << object_names_[feature_object_id] << ".";
             }
             else{
-                std::cout << "plane : " << feature.second;
+                std::cout << "plane " << feature.second << " of ";
+                int feature_object_id = plane_feature2id[feature.second];
+                std::cout << object_names_[feature_object_id] << ".";
             }
 
             std::cout << std::endl;
         }
     }
+};
+
+void SceneInference::LogSceneStatus(){
+    configuru::Config cfg = configuru::Config::object();
+    // update object level information 
+    // object_name_object_id
+    for(auto object : object_relationship_){
+        int object_id = object.first;
+        if(object_deprecated_[object_id]){
+            continue;
+        }
+
+        std::string object_name = object_names_[object_id];
+        std::string object_unique_name = object_name
+            + "_" + std::to_string(object_id);
+        
+        std::string object_config_file = current_working_path_ + "/models/" + 
+                                (std::string) object_register_config_[object_name];
+
+        configuru::Config object_config = configuru::parse_file(object_config_file,
+            configuru::JSON);
+        
+        // Add current object pose & relationship
+        WriteMatrix4d(object_config, object_poses_[object_id], "object_pose");
+        // Add relationship
+        configuru::Config object_features = configuru::Config::array();
+        for(auto feature : object.second){
+            object_features.push_back(configuru::Config::array({
+                feature.first, feature.second
+            }));
+        }
+        object_config["object_feature_relation"] = object_features;
+        cfg[object_unique_name] = object_config;
+    }
+
+    std::string current_path = GetCurrentWorkingDir();
+	configuru::dump_file(current_path + "/log/" + 
+                         "test_log.json", cfg, configuru::JSON);
+    
 };

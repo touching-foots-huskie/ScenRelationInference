@@ -5,8 +5,18 @@
 
 #include <iostream>
 
+#include <cmath>
+
+#include "parse_tool.h"
+
 const double parallel_threshold = 0.01;
 const double support_direction_threshold = 0.2;
+const double support_direction_threshold2 = 0.9;
+
+// augment threshold
+const double bad_arc_augment_ratio = 0.3;
+const double good_arc_augment_ratio = 0.2;
+const double cylinder_threshold = 0.9;
 
 void CalculateDiffPlane2Plane(const Eigen::Ref<Eigen::MatrixXd>& plane_normals,
 							  const Eigen::Ref<Eigen::MatrixXd>& plane_centeral_points,
@@ -52,7 +62,8 @@ boundary_points_1 : boundary points for plane | Dim:[D, K1]
 boundary_points_2 : boundary points for surf | Dim:[D, K2]
 Usage : Plane2Plane [The first feature should at least have three points].
 */
-bool SpatialMatchingCheckV3(const Eigen::Ref<Eigen::Vector3d>& surf_direction,
+bool SpatialMatchingCheckV3(const Eigen::Ref<Eigen::Vector3d>& plane_normal,
+                            const Eigen::Ref<Eigen::Vector3d>& surf_direction,
 							const Eigen::Ref<Eigen::Vector3d>& start_direction,
 							const Eigen::Ref<Eigen::Vector3d>& end_direction,
 							const Eigen::Ref<Eigen::MatrixXd>& boundary_points_1,

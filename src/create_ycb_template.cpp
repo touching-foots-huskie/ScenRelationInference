@@ -18,7 +18,7 @@ int main(){
         std::string object_name = (std::string) object_cfg["name"];
         Eigen::VectorXd object_size = VetorParse(object_cfg["size"]);
         int template_type = (int) object_cfg["type"];
-        Eigen::MatrixXd inner_transform = MatrixParseT(object_cfg["inner_transform"]);
+        Eigen::MatrixXd inner_transform = MatrixParse(object_cfg["inner_transform"]);
         switch (template_type)
         {
         case 0:

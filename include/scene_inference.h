@@ -7,12 +7,12 @@
 
 // const value
 const double plane2plane_angular_threshold = 0.02;
-const double plane2plane_dist_threshold = 0.02;
+const double plane2plane_dist_threshold = 0.025;
 
-const double plane2surf_angular_threshold = 0.02;
-const double plane2surf_dist_threshold = 0.02;
+const double plane2surf_angular_threshold = 0.15;  // different between plane2plane & plane2surf
+const double plane2surf_dist_threshold = 0.025;
 
-const double surf2surf_dist_threshold = 0.02;
+const double surf2surf_dist_threshold = 0.025;
 
 // If one feature is unprecise, then we can leverage the threshold
 const double unprecise_leverage = 3.0;
@@ -23,7 +23,7 @@ This class is used to control the process of managing feature suppporting
 gravity_center is the position of gravity center in original coordinate
 gravity_transform is the transform from ordinary coordinates to gravity coordinate
 gravity_center|Dim:[D, 1]
-gravity_transfrom|Dim:[4, 4]
+gravity_transform|Dim:[4, 4]
 In Feature Manager, Feature appears in pairs, the difference here is that there is
 no edges between the two pairs of features
 Input : gravity_center : MatrixXd
@@ -33,9 +33,9 @@ public:
 	ProjectionFeatureManager(const Eigen::Ref<Eigen::MatrixXd>& gravity_center,
                              const Eigen::Ref<Eigen::MatrixXd>& gravity_transform) {
 		// gravity transformation coordinates
-
-        rotation_transform_ = gravity_transform.block(0, 0, 3, 3);
-		transition_transform_ = gravity_transform.block(0, 3, 3, 1);
+        Eigen::MatrixXd inverse_gravity_transform = gravity_transform.inverse();
+        rotation_transform_ = inverse_gravity_transform.block(0, 0, 3, 3);
+		transition_transform_ = inverse_gravity_transform.block(0, 3, 3, 1);
 		// the gravity center should be the projected one
 		gravity_center_ = rotation_transform_ * gravity_center + transition_transform_;
 		gravity_center_.row(2) *= 0;  // clear z = 0, make the projection
@@ -51,13 +51,16 @@ public:
 
 	// judge if current features can provide a feasible supporting
 	bool SupportingStatus();
-	std::map<int, std::vector<int> > points_index_feature_;
+	std::map<int, std::vector<int> > points_1_index_feature_; // points self
+    std::map<int, std::vector<int> > points_2_index_feature_; // points outside
 	std::map<int, std::vector<int> > norms_index_feature_;
 
-	Eigen::MatrixXd boundary_points_;
+	Eigen::MatrixXd boundary_points_1_;
+    Eigen::MatrixXd boundary_points_2_;
 	Eigen::MatrixXd projection_norms_;
 
-	Eigen::MatrixXd copy_boundary_points_;
+	Eigen::MatrixXd copy_boundary_points_1_;
+    Eigen::MatrixXd copy_boundary_points_2_;
 	Eigen::MatrixXd copy_projection_norms_;
 
 	Eigen::MatrixXd rotation_transform_;
@@ -70,12 +73,14 @@ public:
 	SceneInference(std::string object_register_file);
 	bool IsObjectIn(int object_id);
 	void AddObject(int object_id, std::string object_name);
+
 	// Manage Feature through different feature types
 	void AddPlaneFeature(configuru::Config& plane_config);
 	void AddSurfFeature(configuru::Config& plane_config);
 
 	void RemoveObject(int object_id);  // Object Removal is using a lasy remove
 	void UpdateObjectPose(int object_id, const Eigen::Ref<Eigen::MatrixXd>& object_pose);
+    void SetGravity(const Eigen::Ref<Eigen::MatrixXd>& gravity_pose);
 
 	void CalculateDiff(); 
 	void FeatureSupportingRelation();
@@ -83,9 +88,11 @@ public:
 	void RelationshipInference();
 
     void DisplayRelationship();
+    void LogSceneStatus();
 private:
 	int current_object_id_;
 	std::string object_register_file_;
+    std::string current_working_path_;
 	// mask data
 	std::map<int, bool> object_deprecated_;
 	std::map<std::string, std::vector<bool> > feature_deprecated_;  // Plane& Surf
@@ -120,7 +127,7 @@ private:
 	std::map<int, std::vector<int> > surf_feature_index_object_;
     std::map<int, Eigen::MatrixXd> object_poses_;  // log poses
     std::map<int, std::string> object_names_;
-    std::map<int, Eigen::MatrixXd> object_inner_transfrom_;
+    std::map<int, Eigen::MatrixXd> object_inner_transform_;
 
 	// feature index to object id log
 	std::vector<int> plane_feature2id;

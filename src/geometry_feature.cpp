@@ -25,6 +25,9 @@ void CalculateDiffPlane2Plane(const Eigen::Ref<Eigen::MatrixXd>& plane_normals,
 			dist_diff(j, i) = dist_diff(i, j);
 		}
 	}
+
+    // absolute value
+    dist_diff = dist_diff.cwiseAbs();
 };
 
 void CalculateDiffSurf2Surf(const Eigen::Ref<Eigen::MatrixXd>& surf_directions,
@@ -36,8 +39,8 @@ void CalculateDiffSurf2Surf(const Eigen::Ref<Eigen::MatrixXd>& surf_directions,
 
 	Eigen::MatrixXd rep_vectors_1 = surf_centeral_points.replicate(N, 1);
 	rep_vectors_1.resize(D, N * N);
-	Eigen::MatrixXd rep_vectors_2 = surf_centeral_points.transpose().replicate(N, 1);
-	Eigen::MatrixXd diff_vectors = -rep_vectors_1 + rep_vectors_2.transpose();  // Dim:[D, N*N]
+	Eigen::MatrixXd rep_vectors_2 = surf_centeral_points.replicate(1, N);
+	Eigen::MatrixXd diff_vectors = -rep_vectors_1 + rep_vectors_2;  // Dim:[D, N*N]
 
 	dist_diff = Eigen::MatrixXd::Zero(N, N);
 	for (int i = 0; i < N; i++) {
@@ -50,8 +53,7 @@ void CalculateDiffSurf2Surf(const Eigen::Ref<Eigen::MatrixXd>& surf_directions,
 			if (normal_len < parallel_threshold) {
 				double diff_vector_norm = diff_vector.norm();
 
-				Eigen::Vector3d this_direction = surf_directions.row(i);
-				double diff_vector_proj = this_direction.dot(diff_vector);
+				double diff_vector_proj = direction_1.dot(diff_vector);
 				dist_diff(i, j) = sqrt(pow(diff_vector_norm, 2) - pow(diff_vector_proj, 2));
 			}
 			else {
@@ -61,8 +63,15 @@ void CalculateDiffSurf2Surf(const Eigen::Ref<Eigen::MatrixXd>& surf_directions,
 			dist_diff(j, i) = dist_diff(i, j);
 		}
 	}
+
+    dist_diff = dist_diff.cwiseAbs();
 };
 
+/*
+N1 is the number of planes, N2 is the number of surfs
+plane_centeral_points | Dim:[D, N1]
+surf_centeral_points | Dim:[D, N2]
+ */
 void CalculateDiffPlane2Surf(const Eigen::Ref<Eigen::MatrixXd>& plane_normals,
                              const Eigen::Ref<Eigen::MatrixXd>& surf_directions,
                              const Eigen::Ref<Eigen::MatrixXd>& plane_centeral_points,
@@ -78,17 +87,20 @@ void CalculateDiffPlane2Surf(const Eigen::Ref<Eigen::MatrixXd>& plane_normals,
 
 	Eigen::MatrixXd rep_vectors_1 = plane_centeral_points.replicate(N2, 1);
 	rep_vectors_1.resize(D, N1 * N2);
-	Eigen::MatrixXd rep_vectors_2 = surf_centeral_points.transpose().replicate(N1, 1);
-	Eigen::MatrixXd diff_vectors = -rep_vectors_1 + rep_vectors_2.transpose();  // Dim:[D, N1*N2]
+	Eigen::MatrixXd rep_vectors_2 = surf_centeral_points.replicate(1, N1);
+	Eigen::MatrixXd diff_vectors = rep_vectors_1 - rep_vectors_2;  // Dim:[D, N1*N2]
 	Eigen::MatrixXd aug_dist_diff = plane_normals.transpose() * diff_vectors;  // Dim:[N1, N1*N2]
 
 	dist_diff = Eigen::MatrixXd::Zero(N1, N2);
+
+    // Plane2Surf is a one-direction looping structure
 	for (int i = 0; i < N1; i++) {
-		for (int j = i + 1; j < N2; j++) {
-			dist_diff(i, j) = aug_dist_diff(i, i * N1 + j);
-			dist_diff(j, i) = dist_diff(i, j);
+		for (int j = 0; j < N2; j++) {
+			dist_diff(i, j) = aug_dist_diff(i, i * N2 + j);
 		}
 	}
+
+    dist_diff = dist_diff.cwiseAbs();
 };
 
 // check function for single pairs 
@@ -103,24 +115,35 @@ bool SurfaceClipCheck(const Eigen::Ref<Eigen::Vector3d>& surf_direction,
                       const Eigen::Ref<Eigen::Vector3d>& normal_direction) {
 
 	Eigen::Vector3d startp90 = surf_direction.cross(start_direction);
-	Eigen::Vector3d endp90 = surf_direction.cross(endp90);
+	Eigen::Vector3d endp90 = surf_direction.cross(end_direction);
 
-	bool left_to_start = (startp90.dot(normal_direction) >= 0);
-	bool right_to_end = (endp90.dot(normal_direction) <= 0);
+    // if cylinder first & return true clip
+    double direction_gap = start_direction.dot(end_direction);
+    if(direction_gap > cylinder_threshold){
+        return true;
+    }
+
 	double arc_dot = startp90.dot(end_direction);
 	bool clip_status;
+
+    double start_status = startp90.dot(normal_direction);
+    double end_status = endp90.dot(normal_direction);
+
+    // add different augment based on different arc type
 
 	if (arc_dot >= 0) {
 		// bad arc
 		clip_status = false;
-		if (!left_to_start && !right_to_end)
+		if ((start_status < bad_arc_augment_ratio) &&
+             (end_status >= -bad_arc_augment_ratio))
 			clip_status = true;
 	}
 	else
 	{
 		// good arc : actual
 		clip_status = true;
-		if (left_to_start && right_to_end)
+		if ((start_status >= good_arc_augment_ratio) &&
+             (end_status < good_arc_augment_ratio))
 			clip_status = false;
 	}
 	return clip_status;
@@ -137,14 +160,9 @@ bool SpatialMatchingCheck(const Eigen::Ref<Eigen::MatrixXd>& boundary_points_1,
 	Eigen::Vector3d edge_k_0 = boundary_points_1.col(0) - boundary_points_1.col(1);
 	Eigen::Vector3d edge_k_1 = boundary_points_1.col(1) - boundary_points_1.col(2);
 	Eigen::Vector3d normal = edge_k_0.cross(edge_k_1);
-
-	std::cout << edge_k_0 << std::endl;
-
-	std::cout << edge_k_1 << std::endl;
-
-	std::cout << normal << std::endl;
-
+	
 	if (normal.norm() != 0) {
+        normal /= normal.norm();
 		for (int k = 0; k < K1 - 1; k++) {
 			Eigen::Vector3d edge_k = boundary_points_1.col(k) - boundary_points_1.col(k + 1);//:[D,1]
 			Eigen::MatrixXd normal_k = normal.cross(edge_k);
@@ -191,6 +209,7 @@ bool SpatialMatchingCheckV2(const Eigen::Ref<Eigen::MatrixXd>& boundary_points_1
 	Eigen::Vector3d normal = edge_k_0.cross(edge_k_1);
 
 	if (normal.norm() != 0) {
+        normal /= normal.norm();
 		for (int k = 0; k < 1; k++) {
 			Eigen::Vector3d edge_k = boundary_points_1.col(k) - boundary_points_1.col(k + 1);//:[D,1]
 			Eigen::Vector3d normal_k = normal.cross(edge_k);
@@ -247,7 +266,8 @@ boundary_points_1 : boundary points for plane | Dim:[D, K1]
 boundary_points_2 : boundary points for surf | Dim:[D, K2]
 Usage : Plane2Plane [The first feature should at least have three points].
 */
-bool SpatialMatchingCheckV3(const Eigen::Ref<Eigen::Vector3d>& surf_direction,
+bool SpatialMatchingCheckV3(const Eigen::Ref<Eigen::Vector3d>& plane_normal,
+                            const Eigen::Ref<Eigen::Vector3d>& surf_direction,
 	                        const Eigen::Ref<Eigen::Vector3d>& start_direction,
 	                        const Eigen::Ref<Eigen::Vector3d>& end_direction,
 	                        const Eigen::Ref<Eigen::MatrixXd>& boundary_points_1,
@@ -258,12 +278,12 @@ bool SpatialMatchingCheckV3(const Eigen::Ref<Eigen::Vector3d>& surf_direction,
 
 	bool matched = true;
 
-	Eigen::Vector3d edge_k_0 = boundary_points_1.col(0) - boundary_points_1.col(1);
-	Eigen::Vector3d edge_k_1 = boundary_points_1.col(1) - boundary_points_1.col(2);
-	Eigen::Vector3d normal = edge_k_0.cross(edge_k_1);
+    // Get surface normal
+	Eigen::Vector3d normal = plane_normal;
 
 	assert(normal.norm() != 0);
 
+    normal /= normal.norm();
 	for (int k = 0; k < K1 - 1; k++) {
 		Eigen::Vector3d edge_k = boundary_points_1.col(k) - boundary_points_1.col(k + 1);//:[D,1]
 		Eigen::Vector3d normal_k = normal.cross(edge_k);
@@ -364,12 +384,13 @@ void SupportingStatusV2(const Eigen::Ref<Eigen::MatrixXd>& surf_directions,
 	                    Eigen::Ref<Eigen::MatrixXd> supporting_status) {
 	
     supporting_status = gravity_direction.transpose() * surf_directions;
+    DisplayMatrix(supporting_status, "Supporting_Status");
 
-	double surf_threshold = 1.0 - support_direction_threshold;
+	double surf_threshold = support_direction_threshold2;
 	// Supporting Feature
 	for (int i = 0; i < supporting_status.cols(); i++) {
 		double plane_angle = supporting_status(0, i);
-		if (abs(plane_angle) >= surf_threshold) {
+		if (abs(plane_angle) <= surf_threshold) {
 			supporting_status(0, i) = 1.0;
 		}
 		else {

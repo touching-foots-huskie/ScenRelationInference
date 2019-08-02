@@ -26,6 +26,17 @@ Read in csv file & leave the best render score. Then I can use it to make geomet
 
 ## Debug on System
 
-Debug on current system
+Debug on current system  
+
+### Adding system bug
+
+Finished
+
+### Synatx bugs on feature inference
+
+TODO:
+Add Visualization System!!!!(in Matlab or Python)
+(The new visualization is in Matlab & we need to add a data log 
+in geometry system)
 
 ## Intergrate it into optimization

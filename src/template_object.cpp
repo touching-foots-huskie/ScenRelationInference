@@ -168,30 +168,30 @@ void WriteBox(std::string object_name,
 
     surf_cfg["surf_boundary_directions"] =  configuru::Config::array(
         {
-            configuru::Config::array({0, -1, 0}),
-            configuru::Config::array({0, 0, -1}),
-            configuru::Config::array({0, 0, 1}),
-            configuru::Config::array({0, -1, 0}),
             configuru::Config::array({0, 1, 0}),
             configuru::Config::array({0, 0, 1}),
             configuru::Config::array({0, 0, -1}),
             configuru::Config::array({0, 1, 0}),
+            configuru::Config::array({0, -1, 0}),
+            configuru::Config::array({0, 0, -1}),
+            configuru::Config::array({0, 0, 1}),
+            configuru::Config::array({0, -1, 0}),
+            configuru::Config::array({-1, 0, 0}),
+            configuru::Config::array({0, 0, 1}),
+            configuru::Config::array({0, 0, -1}),
+            configuru::Config::array({-1, 0, 0}),
             configuru::Config::array({1, 0, 0}),
             configuru::Config::array({0, 0, -1}),
             configuru::Config::array({0, 0, 1}),
             configuru::Config::array({1, 0, 0}),
-            configuru::Config::array({-1, 0, 0}),
-            configuru::Config::array({0, 0, 1}),
-            configuru::Config::array({0, 0, -1}),
-            configuru::Config::array({-1, 0, 0}),
-            configuru::Config::array({-1, 0, 0}),
-            configuru::Config::array({0, -1, 0}),
-            configuru::Config::array({0, 1, 0}),
-            configuru::Config::array({-1, 0, 0}),
             configuru::Config::array({1, 0, 0}),
             configuru::Config::array({0, 1, 0}),
             configuru::Config::array({0, -1, 0}),
-            configuru::Config::array({1, 0, 0})
+            configuru::Config::array({1, 0, 0}),
+            configuru::Config::array({-1, 0, 0}),
+            configuru::Config::array({0, -1, 0}),
+            configuru::Config::array({0, 1, 0}),
+            configuru::Config::array({-1, 0, 0})
         }
     );
 
@@ -323,6 +323,12 @@ void WriteCylinder(std::string object_name,
     cfg["plane_feature"] = plane_cfg;
 
     configuru::Config surf_cfg = configuru::Config::object();
+    surf_cfg["surf_approximated"]  = configuru::Config::array(
+        {
+            false
+        }
+    );
+
     surf_cfg["surf_directions"]  = configuru::Config::array(
         {
             configuru::Config::array({0, 0, 1})
@@ -337,7 +343,7 @@ void WriteCylinder(std::string object_name,
 
     surf_cfg["surf_radius"]  = configuru::Config::array(
         {
-            0
+            a
         }
     );
 
