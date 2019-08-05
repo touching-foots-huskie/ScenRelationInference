@@ -10,13 +10,16 @@
 #include "parse_tool.h"
 
 const double parallel_threshold = 0.01;
-const double support_direction_threshold = 0.2;
-const double support_direction_threshold2 = 0.9;
+const double support_direction_threshold = 0.7;  // 45 degree
+const double support_direction_threshold2 = 0.7;
 
 // augment threshold
 const double bad_arc_augment_ratio = 0.3;
 const double good_arc_augment_ratio = 0.2;
 const double cylinder_threshold = 0.9;
+
+// spatial checking should have overlap larger than this
+const double overlap_threshold_in_check = 0.2;  
 
 void CalculateDiffPlane2Plane(const Eigen::Ref<Eigen::MatrixXd>& plane_normals,
 							  const Eigen::Ref<Eigen::MatrixXd>& plane_centeral_points,
@@ -39,6 +42,8 @@ void CalculateDiffPlane2Surf(const Eigen::Ref<Eigen::MatrixXd>& plane_normals,
 check if the contact normals are supported by existing surface
 start direction and end direction and distinguished by r-clock-wise
 */
+
+bool OverlapCheck(double min_1, double min_2, double max_1, double max_2, double overlap_threshold);
 
 bool SurfaceClipCheck(const Eigen::Ref<Eigen::Vector3d>& surf_direction,
 					  const Eigen::Ref<Eigen::Vector3d>& start_direction,

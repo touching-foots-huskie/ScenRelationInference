@@ -16,7 +16,7 @@ int main() {
     PoseDataParse pose_data_parser;
 
     std::string current_path = GetCurrentWorkingDir();
-    std::string file_name = "05152.csv";
+    std::string file_name = "0515.csv";
     pose_data_parser.ReadData(current_path + "/data/" + file_name);
     std::vector<int> object_ids = pose_data_parser.GetIds();
     
@@ -52,13 +52,8 @@ int main() {
     }
 
     // Inference geometry relationship
-    scene_inference.CalculateDiff();
-    scene_inference.FeatureSupportingRelation();
+    scene_inference.RelationshipInference("test_log.json");
 
-    scene_inference.RelationshipInference();
-
-    scene_inference.DisplayRelationship();
-    scene_inference.LogSceneStatus();
     return 0;
 
 }

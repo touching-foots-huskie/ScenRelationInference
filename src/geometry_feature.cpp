@@ -149,6 +149,50 @@ bool SurfaceClipCheck(const Eigen::Ref<Eigen::Vector3d>& surf_direction,
 	return clip_status;
 };
 
+bool OverlapCheck(double min_1, double min_2, double max_1, double max_2, double overlap_threshold){
+    double eps = 1e-5;
+    if(max_1 > max_2){
+        if(min_1 > max_2){
+            return false;
+        }
+        else
+        {
+            double overlap_value = max_2 - min_1;
+            double overlap_ratio = std::max(overlap_value / (max_1 - min_1 + eps),
+                 overlap_value / (max_2 - min_2 + eps));
+            if(overlap_ratio <= overlap_threshold){
+                return false;
+            }
+            else{
+                return true;
+            }
+        }
+        
+    }
+    else
+    {
+        if(min_2 > max_1){
+            return false;
+        }
+        else
+        {
+            double overlap_value = max_1 - min_2;
+            double overlap_ratio = std::max(overlap_value / (max_2 - min_2 + eps),
+                 overlap_value / (max_1 - min_1 + eps));
+            if(overlap_ratio <= overlap_threshold){
+                return false;
+            }
+            else{
+                return true;
+            }
+        }
+    }
+    
+};
+
+/*
+For all spatial matching checking, a overlapping threshold is added
+ */
 bool SpatialMatchingCheck(const Eigen::Ref<Eigen::MatrixXd>& boundary_points_1,
 	                      const Eigen::Ref<Eigen::MatrixXd>& boundary_points_2) {
 
@@ -168,10 +212,14 @@ bool SpatialMatchingCheck(const Eigen::Ref<Eigen::MatrixXd>& boundary_points_1,
 			Eigen::MatrixXd normal_k = normal.cross(edge_k);
 			Eigen::MatrixXd projection_i = normal_k.transpose() * boundary_points_1; // Dim:[1,K]
 			Eigen::MatrixXd projection_j = normal_k.transpose() * boundary_points_2;
-			if ((projection_i.maxCoeff() < projection_j.minCoeff()) ||
-				(projection_j.maxCoeff() < projection_i.minCoeff())) {
-				return false;
-			}
+			
+            double max_1 = projection_i.maxCoeff();
+            double max_2 = projection_j.maxCoeff();
+            double min_1 = projection_i.minCoeff();
+            double min_2 = projection_j.minCoeff();
+            if(!OverlapCheck(min_1, min_2, max_1, max_2, overlap_threshold_in_check)){
+                return false;
+            }
 		}
 
 		for (int k = 0; k < K2 - 1; k++) {
@@ -179,10 +227,13 @@ bool SpatialMatchingCheck(const Eigen::Ref<Eigen::MatrixXd>& boundary_points_1,
 			Eigen::MatrixXd normal_k = normal.cross(edge_k);
 			Eigen::MatrixXd projection_i = normal_k.transpose() * boundary_points_1; // Dim:[1,K]
 			Eigen::MatrixXd projection_j = normal_k.transpose() * boundary_points_2;
-			if ((projection_i.maxCoeff() < projection_j.minCoeff()) ||
-				(projection_j.maxCoeff() < projection_i.minCoeff())) {
-				return false;
-			}
+			double max_1 = projection_i.maxCoeff();
+            double max_2 = projection_j.maxCoeff();
+            double min_1 = projection_i.minCoeff();
+            double min_2 = projection_j.minCoeff();
+            if(!OverlapCheck(min_1, min_2, max_1, max_2, overlap_threshold_in_check)){
+                return false;
+            }
 		}
 
 	}
@@ -215,10 +266,13 @@ bool SpatialMatchingCheckV2(const Eigen::Ref<Eigen::MatrixXd>& boundary_points_1
 			Eigen::Vector3d normal_k = normal.cross(edge_k);
 			Eigen::MatrixXd projection_i = normal_k.transpose() * boundary_points_1; // Dim:[1,K]
 			Eigen::MatrixXd projection_j = normal_k.transpose() * boundary_points_2;
-			if ((projection_i.maxCoeff() < projection_j.minCoeff()) ||
-				(projection_j.maxCoeff() < projection_i.minCoeff())) {
-				return false;
-			}
+			double max_1 = projection_i.maxCoeff();
+            double max_2 = projection_j.maxCoeff();
+            double min_1 = projection_i.minCoeff();
+            double min_2 = projection_j.minCoeff();
+            if(!OverlapCheck(min_1, min_2, max_1, max_2, overlap_threshold_in_check)){
+                return false;
+            }
 		}
 
 		for (int k = 0; k < 1; k++) {
@@ -226,10 +280,13 @@ bool SpatialMatchingCheckV2(const Eigen::Ref<Eigen::MatrixXd>& boundary_points_1
 			Eigen::Vector3d normal_k = normal.cross(edge_k);
 			Eigen::MatrixXd projection_i = normal_k.transpose() * boundary_points_1; // Dim:[1,K]
 			Eigen::MatrixXd projection_j = normal_k.transpose() * boundary_points_2;
-			if ((projection_i.maxCoeff() < projection_j.minCoeff()) ||
-				(projection_j.maxCoeff() < projection_i.minCoeff())) {
-				return false;
-			}
+			double max_1 = projection_i.maxCoeff();
+            double max_2 = projection_j.maxCoeff();
+            double min_1 = projection_i.minCoeff();
+            double min_2 = projection_j.minCoeff();
+            if(!OverlapCheck(min_1, min_2, max_1, max_2, overlap_threshold_in_check)){
+                return false;
+            }
 		}
 	}
 	else {
@@ -238,20 +295,26 @@ bool SpatialMatchingCheckV2(const Eigen::Ref<Eigen::MatrixXd>& boundary_points_1
 			Eigen::MatrixXd edge_k = boundary_points_1.col(k) - boundary_points_1.col(k + 1);//:[D,1]
 			Eigen::MatrixXd projection_i = edge_k.transpose() * boundary_points_1; // Dim:[1,K]
 			Eigen::MatrixXd projection_j = edge_k.transpose() * boundary_points_2;
-			if ((projection_i.maxCoeff() < projection_j.minCoeff()) ||
-				(projection_j.maxCoeff() < projection_i.minCoeff())) {
-				return false;
-			}
+			double max_1 = projection_i.maxCoeff();
+            double max_2 = projection_j.maxCoeff();
+            double min_1 = projection_i.minCoeff();
+            double min_2 = projection_j.minCoeff();
+            if(!OverlapCheck(min_1, min_2, max_1, max_2, overlap_threshold_in_check)){
+                return false;
+            }
 		}
 
 		for (int k = 0; k < 1; k++) {
 			Eigen::MatrixXd edge_k = boundary_points_2.col(k) - boundary_points_2.col(k + 1);//:[D,1]
 			Eigen::MatrixXd projection_i = edge_k.transpose() * boundary_points_1; // Dim:[1,K]
 			Eigen::MatrixXd projection_j = edge_k.transpose() * boundary_points_2;
-			if ((projection_i.maxCoeff() < projection_j.minCoeff()) ||
-				(projection_j.maxCoeff() < projection_i.minCoeff())) {
-				return false;
-			}
+			double max_1 = projection_i.maxCoeff();
+            double max_2 = projection_j.maxCoeff();
+            double min_1 = projection_i.minCoeff();
+            double min_2 = projection_j.minCoeff();
+            if(!OverlapCheck(min_1, min_2, max_1, max_2, overlap_threshold_in_check)){
+                return false;
+            }
 		}
 	}
 
@@ -289,10 +352,13 @@ bool SpatialMatchingCheckV3(const Eigen::Ref<Eigen::Vector3d>& plane_normal,
 		Eigen::Vector3d normal_k = normal.cross(edge_k);
 		Eigen::MatrixXd projection_i = normal_k.transpose() * boundary_points_1; // Dim:[1,K]
 		Eigen::MatrixXd projection_j = normal_k.transpose() * boundary_points_2;
-		if ((projection_i.maxCoeff() < projection_j.minCoeff()) ||
-			(projection_j.maxCoeff() < projection_i.minCoeff())) {
-			return false;
-		}
+		double max_1 = projection_i.maxCoeff();
+        double max_2 = projection_j.maxCoeff();
+        double min_1 = projection_i.minCoeff();
+        double min_2 = projection_j.minCoeff();
+        if(!OverlapCheck(min_1, min_2, max_1, max_2, overlap_threshold_in_check)){
+            return false;
+        }
 	}
 
 	for (int k = 0; k < K2 - 1; k++) {
@@ -300,10 +366,13 @@ bool SpatialMatchingCheckV3(const Eigen::Ref<Eigen::Vector3d>& plane_normal,
 		Eigen::Vector3d normal_k = normal.cross(edge_k);
 		Eigen::MatrixXd projection_i = normal_k.transpose() * boundary_points_1; // Dim:[1,K]
 		Eigen::MatrixXd projection_j = normal_k.transpose() * boundary_points_2;
-		if ((projection_i.maxCoeff() < projection_j.minCoeff()) ||
-			(projection_j.maxCoeff() < projection_i.minCoeff())) {
-			return false;
-		}
+		double max_1 = projection_i.maxCoeff();
+        double max_2 = projection_j.maxCoeff();
+        double min_1 = projection_i.minCoeff();
+        double min_2 = projection_j.minCoeff();
+        if(!OverlapCheck(min_1, min_2, max_1, max_2, overlap_threshold_in_check)){
+            return false;
+        }
 	}
 
 	if (matched) {

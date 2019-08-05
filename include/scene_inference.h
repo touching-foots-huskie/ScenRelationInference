@@ -17,6 +17,8 @@ const double surf2surf_dist_threshold = 0.025;
 // If one feature is unprecise, then we can leverage the threshold
 const double unprecise_leverage = 3.0;
 
+const double minimum_surf_threshold = 0.03;  // only surf larger than this can have supporting
+
 /*
 Control for one object
 This class is used to control the process of managing feature suppporting
@@ -88,7 +90,9 @@ public:
 	void RelationshipInference();
 
     void DisplayRelationship();
-    void LogSceneStatus();
+    void LogSceneStatus(std::string log_file_name);
+
+    void RelationshipInference(std::string log_file_name);
 private:
 	int current_object_id_;
 	std::string object_register_file_;

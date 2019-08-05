@@ -39,4 +39,6 @@ Add Visualization System!!!!(in Matlab or Python)
 (The new visualization is in Matlab & we need to add a data log 
 in geometry system)
 
+Now I need to fix the problem of wrong projection. Once again, I make projection on the feature to detect the supporting status.
+
 ## Intergrate it into optimization

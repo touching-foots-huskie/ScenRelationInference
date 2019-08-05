@@ -5,8 +5,6 @@ void ProjectionFeatureManager::AddFeature(int feature_id,
                     const Eigen::Ref<Eigen::MatrixXd>& feature_boundary_points_1,
 		            const Eigen::Ref<Eigen::MatrixXd>& feature_boundary_points_2) {
 	
-    gravity_center_ = rotation_transform_ * gravity_center_ + transition_transform_;
-
 	// pairs 1
     int N1 = feature_boundary_points_1.cols();
 
@@ -518,6 +516,11 @@ void SceneInference::FeatureSupportingRelation() {
 				continue;
 			}
 
+            // we make a limitation over surf2surf, only large surf can support each other
+            if((surf_radius_(i) < minimum_surf_threshold) || (surf_radius_(j) < minimum_surf_threshold)){
+                continue;
+            }
+
 			// If one feature is approximate, threshold will be leverage
 			double dist_threshold = surf2surf_dist_threshold;
 
@@ -779,7 +782,7 @@ void SceneInference::DisplayRelationship(){
     }
 };
 
-void SceneInference::LogSceneStatus(){
+void SceneInference::LogSceneStatus(std::string log_file_name){
     configuru::Config cfg = configuru::Config::object();
     // update object level information 
     // object_name_object_id
@@ -814,6 +817,17 @@ void SceneInference::LogSceneStatus(){
 
     std::string current_path = GetCurrentWorkingDir();
 	configuru::dump_file(current_path + "/log/" + 
-                         "test_log.json", cfg, configuru::JSON);
+                         log_file_name, cfg, configuru::JSON);
     
+};
+
+/*
+Relationship Inferenece is a combined operation on geometry inference
+ */
+void SceneInference::RelationshipInference(std::string log_file_name){
+    CalculateDiff();
+    FeatureSupportingRelation();
+    RelationshipInference();
+    DisplayRelationship();
+    LogSceneStatus(log_file_name);
 };
