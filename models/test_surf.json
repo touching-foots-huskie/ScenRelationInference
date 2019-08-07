@@ -1,0 +1,58 @@
+{
+	"object_name":       "test_surf",
+	"inner_transform":   [
+		[ 1.0, 0.0, 0.0, 2.0 ],
+		[ 0.0, 1.0, 0.0, 3.0 ],
+		[ 0.0, 0.0, 1.0, 1.0 ],
+		[ 0.0, 0.0, 0.0, 1.0 ]
+	],
+	"rotation_matrix":   [
+		[ 1.0, 0.0, 0.0 ],
+		[ 0.0, 1.0, 0.0 ],
+		[ 0.0, 0.0, 1.0 ]
+	],
+	"transition_matrix": [
+		[ 2.0 ],
+		[ 3.0 ],
+		[ 1.0 ]
+	],
+	"gravity_center":    [ 0.0, 0.0, 0.0 ],
+	"plane_feature":     {
+		"plane_approximated":    [ false, false ],
+		"plane_normals":         [
+			[ 0, 0, 1 ],
+			[ 0, 0, -1 ]
+		],
+		"plane_centers":         [
+			[ 0, 0, 1.0 ],
+			[ 0, 0, -1.0 ]
+		],
+		"plane_boundary_points": [
+			[ 1.0, 0, 1.0 ],
+			[ 0, 1.0, 1.0 ],
+			[ -1.0, 0, 1.0 ],
+			[ 0, -1.0, 1.0 ],
+			[ 1.0, 0, -1.0 ],
+			[ 0, 1.0, -1.0 ],
+			[ -1.0, 0, -1.0 ],
+			[ 0, -1.0, -1.0 ]
+		]
+	},
+	"surf_feature":      {
+		"surf_directions":          [
+			[ 0, 0, 1 ]
+		],
+		"surf_centers":             [
+			[ 0, 0, 0 ]
+		],
+		"surf_radius":              [ 0 ],
+		"surf_boundary_directions": [
+			[ 1, 0.01, 0 ],
+			[ 1, -0.01, 0 ]
+		],
+		"surf_boundary_points":     [
+			[ 0, 0, -1.0 ],
+			[ 0, 0, 1.0 ]
+		]
+	}
+}
