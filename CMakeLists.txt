@@ -21,7 +21,7 @@ add_library(template_object SHARED ${PROJECT_SOURCE_DIR}/src/template_object.cpp
 add_library(pose_data_parse SHARED ${PROJECT_SOURCE_DIR}/src/pose_data_parse.cpp)
 
 add_library(scene_inference SHARED ${PROJECT_SOURCE_DIR}/src/scene_inference.cpp)
-target_link_libraries(scene_inference geometry_feature)
+target_link_libraries(scene_inference geometry_feature parse_tool)
 
 add_executable(YCB_template ${PROJECT_SOURCE_DIR}/include/configuru.hpp ${PROJECT_SOURCE_DIR}/src/create_ycb_template.cpp)
 target_link_libraries(YCB_template Eigen3::Eigen parse_tool geometry_feature template_object scene_inference)
