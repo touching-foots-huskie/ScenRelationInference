@@ -58,11 +58,14 @@ int main() {
     std::vector<Eigen::MatrixXd> normal_2s;
     std::vector<Eigen::MatrixXd> center_1s;
     std::vector<Eigen::MatrixXd> center_2s;
+    std::vector<double> radius_1s;
+    std::vector<double> radius_2s;
     std::vector<int> object_id_1s;
     std::vector<int> object_id_2s;
     std::vector<int> support_types; 
     scene_inference.FeatureForOptimization(
         normal_1s, normal_2s, center_1s, center_2s, 
+        radius_1s, radius_2s,
         object_id_1s, object_id_2s, support_types);
         
     return 0;

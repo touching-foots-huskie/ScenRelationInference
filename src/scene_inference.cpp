@@ -840,6 +840,8 @@ void SceneInference::FeatureForOptimization(std::vector<Eigen::MatrixXd>& normal
                                 std::vector<Eigen::MatrixXd>& normal_2s,
                                 std::vector<Eigen::MatrixXd>& center_1s,
                                 std::vector<Eigen::MatrixXd>& center_2s,
+                                std::vector<double>& radius_1s,
+                                std::vector<double>& radius_2s,
                                 std::vector<int>& object_id_1s, 
                                 std::vector<int>& object_id_2s,
                                 std::vector<int>& support_types) {
@@ -859,6 +861,7 @@ void SceneInference::FeatureForOptimization(std::vector<Eigen::MatrixXd>& normal
                 // normal & center
                 normal_1s.push_back(opt_surf_directions_.block(0, feature.first - num_of_plane_, 3, 1));
                 center_1s.push_back(opt_surf_cenetral_points_.block(0, feature.first - num_of_plane_, 3, 1));
+                radius_1s.push_back(surf_radius_(feature.first - num_of_plane_));
             }
             else{
                 // plane
@@ -868,6 +871,7 @@ void SceneInference::FeatureForOptimization(std::vector<Eigen::MatrixXd>& normal
                 // normal & center
                 normal_1s.push_back(opt_plane_normals_.block(0, feature.first, 3, 1));
                 center_1s.push_back(opt_plane_central_points_.block(0, feature.first, 3, 1));
+                radius_1s.push_back(0);
             }
 
             if(feature.second >= num_of_plane_){
@@ -878,6 +882,7 @@ void SceneInference::FeatureForOptimization(std::vector<Eigen::MatrixXd>& normal
                 // normal & center
                 normal_2s.push_back(opt_surf_directions_.block(0, feature.second - num_of_plane_, 3, 1));
                 center_2s.push_back(opt_surf_cenetral_points_.block(0, feature.second - num_of_plane_, 3, 1));
+                radius_2s.push_back(surf_radius_(feature.second - num_of_plane_));
             }
             else{
                 // plane
@@ -887,6 +892,7 @@ void SceneInference::FeatureForOptimization(std::vector<Eigen::MatrixXd>& normal
                 // normal & center
                 normal_2s.push_back(opt_plane_normals_.block(0, feature.second, 3, 1));
                 center_2s.push_back(opt_plane_central_points_.block(0, feature.second, 3, 1));
+                radius_2s.push_back(0);
             }
 
             support_types.push_back(support_flag);

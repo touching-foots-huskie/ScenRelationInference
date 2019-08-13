@@ -97,6 +97,8 @@ public:
                                 std::vector<Eigen::MatrixXd>& normal_2s,
                                 std::vector<Eigen::MatrixXd>& center_1s,
                                 std::vector<Eigen::MatrixXd>& center_2s,
+                                std::vector<double>& radius_1s,
+                                std::vector<double>& radius_2s,
                                 std::vector<int>& object_id_1s, 
                                 std::vector<int>& object_id_2s,
                                 std::vector<int>& support_types);
