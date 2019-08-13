@@ -185,12 +185,14 @@ void SceneInference::AddPlaneFeature(configuru::Config& plane_config) {
     int num_of_plane_object = plane_normal_object.cols();
     plane_normal_object = rotation_transform * plane_normal_object;
     ConcatMatrix(plane_normals_, plane_normal_object);
+    ConcatMatrix(opt_plane_normals_, plane_normal_object);
 
     // plane center
 	Eigen::MatrixXd plane_center_object = MatrixParseT(plane_config["plane_centers"]);
     plane_center_object = rotation_transform * plane_center_object +
         transition_transform.replicate(1, num_of_plane_object);
 	ConcatMatrix(plane_central_points_, plane_center_object);
+    ConcatMatrix(opt_plane_central_points_, plane_center_object);
 
     // plane boundary points
 	Eigen::MatrixXd plane_boundary_points = MatrixParseT(plane_config["plane_boundary_points"]);
@@ -224,12 +226,14 @@ void SceneInference::AddSurfFeature(configuru::Config& surf_config) {
     int num_of_surf_object = surf_directions.cols();
     surf_directions = rotation_transform * surf_directions;
 	ConcatMatrix(surf_directions_, surf_directions);
+    ConcatMatrix(opt_surf_directions_, surf_directions);
     
     // surf centers
 	Eigen::MatrixXd surf_centeral_points = MatrixParseT(surf_config["surf_centers"]);
     surf_centeral_points = rotation_transform * surf_centeral_points + 
         transition_transform.replicate(1, num_of_surf_object);
 	ConcatMatrix(surf_cenetral_points_, surf_centeral_points);
+    ConcatMatrix(opt_surf_cenetral_points_, surf_centeral_points);
 
     // surf boundary directions
 	Eigen::MatrixXd surf_boundary_directions = MatrixParseT(surf_config["surf_boundary_directions"]);
@@ -752,7 +756,7 @@ void SceneInference::DisplayRelationship(){
         std::cout << "Object : " << object_names_[object_id] << " : "
                   << object_id << std::endl;
 
-        for(auto feature : object_relationship.second){
+        for(auto feature : object_relationship.second) {
             if(feature.first >= num_of_plane_){
                 std::cout << "surf " << feature.first << " of ";
                 int feature_object_id = surf_feature2id[feature.first - num_of_plane_];
@@ -830,4 +834,62 @@ void SceneInference::RelationshipInference(std::string log_file_name){
     RelationshipInference();
     DisplayRelationship();
     LogSceneStatus(log_file_name);
+};
+
+void SceneInference::FeatureForOptimization(std::vector<Eigen::MatrixXd>& normal_1s,
+                                std::vector<Eigen::MatrixXd>& normal_2s,
+                                std::vector<Eigen::MatrixXd>& center_1s,
+                                std::vector<Eigen::MatrixXd>& center_2s,
+                                std::vector<int>& object_id_1s, 
+                                std::vector<int>& object_id_2s,
+                                std::vector<int>& support_types) {
+    
+    for(auto object_relationship : object_relationship_){
+        int object_id = object_relationship.first;
+        if(object_deprecated_[object_id]){
+            continue;
+        } 
+        for(auto feature : object_relationship.second) {
+            int support_flag = 0;
+            if(feature.first >= num_of_plane_){
+                // surf
+                support_flag += 0;
+                int feature_object_id = surf_feature2id[feature.first - num_of_plane_];
+                object_id_1s.push_back(feature_object_id);
+                // normal & center
+                normal_1s.push_back(opt_surf_directions_.block(0, feature.first - num_of_plane_, 3, 1));
+                center_1s.push_back(opt_surf_cenetral_points_.block(0, feature.first - num_of_plane_, 3, 1));
+            }
+            else{
+                // plane
+                support_flag += 10;
+                int feature_object_id = plane_feature2id[feature.first];
+                object_id_1s.push_back(feature_object_id);
+                // normal & center
+                normal_1s.push_back(opt_plane_normals_.block(0, feature.first, 3, 1));
+                center_1s.push_back(opt_plane_central_points_.block(0, feature.first, 3, 1));
+            }
+
+            if(feature.second >= num_of_plane_){
+                // surf
+                support_flag += 0;
+                int feature_object_id = surf_feature2id[feature.second - num_of_plane_];
+                object_id_2s.push_back(feature_object_id);
+                // normal & center
+                normal_2s.push_back(opt_surf_directions_.block(0, feature.second - num_of_plane_, 3, 1));
+                center_2s.push_back(opt_surf_cenetral_points_.block(0, feature.second - num_of_plane_, 3, 1));
+            }
+            else{
+                // plane
+                support_flag += 10;
+                int feature_object_id = plane_feature2id[feature.second];
+                object_id_2s.push_back(feature_object_id);
+                // normal & center
+                normal_2s.push_back(opt_plane_normals_.block(0, feature.second, 3, 1));
+                center_2s.push_back(opt_plane_central_points_.block(0, feature.second, 3, 1));
+            }
+
+            support_types.push_back(support_flag);
+        }
+    }                             
 };

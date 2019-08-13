@@ -93,6 +93,13 @@ public:
     void LogSceneStatus(std::string log_file_name);
 
     void RelationshipInference(std::string log_file_name);
+    void FeatureForOptimization(std::vector<Eigen::MatrixXd>& normal_1s,
+                                std::vector<Eigen::MatrixXd>& normal_2s,
+                                std::vector<Eigen::MatrixXd>& center_1s,
+                                std::vector<Eigen::MatrixXd>& center_2s,
+                                std::vector<int>& object_id_1s, 
+                                std::vector<int>& object_id_2s,
+                                std::vector<int>& support_types);
 private:
 	int current_object_id_;
 	std::string object_register_file_;
@@ -103,17 +110,21 @@ private:
 	// precise data
 	std::map<std::string, std::vector<bool> > feature_approximated_;
 	
-	// plane data 
+	// plane data & feature for optimization
 	Eigen::MatrixXd plane_normals_;
 	Eigen::MatrixXd plane_central_points_;
 	Eigen::MatrixXd plane_boundary_points_;
+    Eigen::MatrixXd opt_plane_normals_;
+	Eigen::MatrixXd opt_plane_central_points_;
 
-	// surf data
+	// surf data & feature for optimization
 	Eigen::MatrixXd surf_directions_;
 	Eigen::MatrixXd surf_cenetral_points_;
 	Eigen::MatrixXd surf_boundary_points_;
 	Eigen::MatrixXd surf_boundary_directions_;
 	Eigen::MatrixXd surf_radius_;
+    Eigen::MatrixXd opt_surf_directions_;
+	Eigen::MatrixXd opt_surf_cenetral_points_;
 
 	// diff datas
 	// angular data

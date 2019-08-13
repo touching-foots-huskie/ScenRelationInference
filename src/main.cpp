@@ -16,7 +16,7 @@ int main() {
     PoseDataParse pose_data_parser;
 
     std::string current_path = GetCurrentWorkingDir();
-    std::string file_name = "0515.csv";
+    std::string file_name = "0630.csv";
     pose_data_parser.ReadData(current_path + "/data/" + file_name);
     std::vector<int> object_ids = pose_data_parser.GetIds();
     
@@ -53,7 +53,18 @@ int main() {
 
     // Inference geometry relationship
     scene_inference.RelationshipInference("test_log.json");
-
+    // test output
+    std::vector<Eigen::MatrixXd> normal_1s;
+    std::vector<Eigen::MatrixXd> normal_2s;
+    std::vector<Eigen::MatrixXd> center_1s;
+    std::vector<Eigen::MatrixXd> center_2s;
+    std::vector<int> object_id_1s;
+    std::vector<int> object_id_2s;
+    std::vector<int> support_types; 
+    scene_inference.FeatureForOptimization(
+        normal_1s, normal_2s, center_1s, center_2s, 
+        object_id_1s, object_id_2s, support_types);
+        
     return 0;
 
 }
