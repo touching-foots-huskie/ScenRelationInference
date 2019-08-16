@@ -746,7 +746,8 @@ void SceneInference::RelationshipInference() {
 	}
 };
 
-void SceneInference::DisplayRelationship(){
+void SceneInference::DisplayRelationship(std::map<int, std::vector<int> >& clusters_relationship){
+	clusters_relationship.clear(); // clear previous relationships for clusters
     for(auto object_relationship : object_relationship_){
         int object_id = object_relationship.first;
         if(object_deprecated_[object_id]){
@@ -774,11 +775,15 @@ void SceneInference::DisplayRelationship(){
                 std::cout << "surf " << feature.second << " of ";
                 int feature_object_id = surf_feature2id[feature.second - num_of_plane_];
                 std::cout << object_names_[feature_object_id] << ".";
+				clusters_relationship[object_id].push_back(feature_object_id);
+				clusters_relationship[feature_object_id].push_back(object_id);
             }
             else{
                 std::cout << "plane " << feature.second << " of ";
                 int feature_object_id = plane_feature2id[feature.second];
                 std::cout << object_names_[feature_object_id] << ".";
+				clusters_relationship[object_id].push_back(feature_object_id);
+				clusters_relationship[feature_object_id].push_back(object_id);
             }
 
             std::cout << std::endl;
@@ -828,11 +833,11 @@ void SceneInference::LogSceneStatus(std::string log_file_name){
 /*
 Relationship Inferenece is a combined operation on geometry inference
  */
-void SceneInference::RelationshipInference(std::string log_file_name){
+void SceneInference::RelationshipInference(std::string log_file_name, std::map<int, std::vector<int> >& clusters_relationship_){
     CalculateDiff();
     FeatureSupportingRelation();
     RelationshipInference();
-    DisplayRelationship();
+    DisplayRelationship(clusters_relationship_);
     LogSceneStatus(log_file_name);
 };
 
