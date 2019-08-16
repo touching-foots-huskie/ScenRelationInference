@@ -356,8 +356,8 @@ void SceneInference::CalculateDiff() {
 	CalculateDiffPlane2Plane(plane_normals_, plane_central_points_,
 		angle_diff_plane2plane_, dist_diff_plane2plane_);
 
-    DisplayMatrix(dist_diff_plane2plane_.block(0, 0, 1, num_of_plane_), "Dist Plane2Plane");
-    DisplayMatrix(angle_diff_plane2plane_.block(0, 0, 1, num_of_plane_), "Angle Plane2Plane");
+    // DisplayMatrix(dist_diff_plane2plane_.block(0, 0, 1, num_of_plane_), "Dist Plane2Plane");
+    // DisplayMatrix(angle_diff_plane2plane_.block(0, 0, 1, num_of_plane_), "Angle Plane2Plane");
 
 	// Plane2Surf
 	CalculateDiffPlane2Surf(plane_normals_, surf_directions_, plane_central_points_,
@@ -567,7 +567,7 @@ void SceneInference::FeatureSupportingRelation() {
 		}
 	}
 
-    DisplayMatrix(feature_supporting_, "Feature Supporting");
+    // DisplayMatrix(feature_supporting_, "Feature Supporting");
 };
 
 bool SceneInference::ObjectSupportStatus(int object_id, 
@@ -820,7 +820,7 @@ void SceneInference::LogSceneStatus(std::string log_file_name){
     }
 
     std::string current_path = GetCurrentWorkingDir();
-	configuru::dump_file(current_path + "/log/" + 
+	configuru::dump_file(current_path + 
                          log_file_name, cfg, configuru::JSON);
     
 };
@@ -829,6 +829,9 @@ void SceneInference::LogSceneStatus(std::string log_file_name){
 Relationship Inferenece is a combined operation on geometry inference
  */
 void SceneInference::RelationshipInference(std::string log_file_name){
+    if(num_of_object_ == 0) {
+        return;
+    }
     CalculateDiff();
     FeatureSupportingRelation();
     RelationshipInference();
@@ -886,7 +889,7 @@ void SceneInference::FeatureForOptimization(std::vector<Eigen::MatrixXd>& normal
             }
             else{
                 // plane
-                support_flag += 10;
+                support_flag += 1;
                 int feature_object_id = plane_feature2id[feature.second];
                 object_id_2s.push_back(feature_object_id);
                 // normal & center
