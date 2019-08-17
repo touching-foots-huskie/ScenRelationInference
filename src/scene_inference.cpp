@@ -899,3 +899,116 @@ void SceneInference::FeatureForOptimization(std::vector<Eigen::MatrixXd>& normal
         }
     }                             
 };
+
+void SceneInference::FeatureForOptimization(std::vector<Eigen::MatrixXd>& transform_1s,
+                            std::vector<Eigen::MatrixXd>& transform_2s,
+                            std::vector<double>& transform_distances,
+                            std::vector<int>& object_id_1s,
+                            std::vector<int>& object_id_2s,
+                            std::vector<int>& support_types) {
+     for(auto object_relationship : object_relationship_){
+        int object_id = object_relationship.first;
+        if(object_deprecated_[object_id]){
+            continue;
+        } 
+
+        for(auto feature : object_relationship.second) {
+            int support_flag = 0;
+            // z axis is the direction we choose
+            double transform_distance = 0;
+            Eigen::Vector3d z_axis;
+            z_axis << 0, 0, 1;
+
+            // object 1:
+            if(feature.first >= num_of_plane_){
+                // surf
+                support_flag += 0;
+                int feature_object_id = surf_feature2id[feature.first - num_of_plane_];
+                object_id_1s.emplace_back(feature_object_id);
+                // normal
+                Eigen::Vector3d normal_1s = opt_surf_directions_.block(0, feature.first - num_of_plane_, 3, 1);
+
+                // rotation axis
+                Eigen::Vector3d rotation_axis = z_axis.cross(normal_1s);
+                // rotation angle
+                double dot_result = z_axis.dot(normal_1s);
+                double rotation_angle = std::acos(dot_result);
+                // Roderegas
+                Eigen::MatrixXd relative_transform(4, 4);
+                Rogas(rotation_axis, rotation_angle, relative_transform.block(0, 0, 3, 3));
+                relative_transform.block(0, 3, 3, 1) = 
+                    opt_surf_cenetral_points_.block(0, feature.first - num_of_plane_, 3, 1);
+
+                transform_distance += surf_radius_(feature.first - num_of_plane_);  // plane need to add surf radius
+                transform_1s.emplace_back(relative_transform);
+
+            }
+            else{
+                // plane
+                support_flag += 10;
+                int feature_object_id = plane_feature2id[feature.first];
+                object_id_1s.emplace_back(feature_object_id);
+                // normal & center
+                Eigen::Vector3d normal_1s = opt_plane_normals_.block(0, feature.first, 3, 1);
+                // rotation axis
+                Eigen::Vector3d rotation_axis = z_axis.cross(normal_1s);
+                // rotation angle
+                double dot_result = z_axis.dot(normal_1s);
+                double rotation_angle = std::acos(dot_result);
+                // Roderegas
+                Eigen::MatrixXd relative_transform(4, 4);
+                Rogas(rotation_axis, rotation_angle, relative_transform.block(0, 0, 3, 3));
+
+                relative_transform.block(0, 3, 3, 1) = opt_plane_central_points_.block(0, feature.first, 3, 1);
+                transform_distance += 0;  // plane need to add surf radius
+                transform_1s.emplace_back(relative_transform);
+            }
+
+            if(feature.second >= num_of_plane_){
+                // surf
+                support_flag += 0;
+                int feature_object_id = surf_feature2id[feature.second - num_of_plane_];
+                object_id_2s.emplace_back(feature_object_id);
+                // normal
+                Eigen::Vector3d normal_2s = opt_surf_directions_.block(0, feature.second - num_of_plane_, 3, 1);
+
+                // rotation axis
+                Eigen::Vector3d rotation_axis = z_axis.cross(normal_2s);
+                // rotation angle
+                double dot_result = z_axis.dot(normal_2s);
+                double rotation_angle = std::acos(dot_result);
+                // Roderegas
+                Eigen::MatrixXd relative_transform(4, 4);
+                Rogas(rotation_axis, rotation_angle, relative_transform.block(0, 0, 3, 3));
+                relative_transform.block(0, 3, 3, 1) = 
+                    opt_surf_cenetral_points_.block(0, feature.second - num_of_plane_, 3, 1);
+
+                transform_distance += surf_radius_(feature.second - num_of_plane_);  // plane need to add surf radius
+                transform_2s.emplace_back(relative_transform);
+            }
+            else{
+                // plane
+                support_flag += 1;
+                int feature_object_id = plane_feature2id[feature.second];
+                object_id_2s.emplace_back(feature_object_id);
+                // normal & center
+                Eigen::Vector3d normal_2s = opt_plane_normals_.block(0, feature.second, 3, 1);
+                // rotation axis
+                Eigen::Vector3d rotation_axis = z_axis.cross(normal_2s);
+                // rotation angle
+                double dot_result = z_axis.dot(normal_2s);
+                double rotation_angle = std::acos(dot_result);
+                // Roderegas
+                Eigen::MatrixXd relative_transform(4, 4);
+                Rogas(rotation_axis, rotation_angle, relative_transform.block(0, 0, 3, 3));
+
+                relative_transform.block(0, 3, 3, 1) = opt_plane_central_points_.block(0, feature.second, 3, 1);
+                transform_distance += 0;  // plane need to add surf radius
+                transform_2s.emplace_back(relative_transform);
+            }
+
+            support_types.emplace_back(support_flag);
+            transform_distances.emplace_back(transform_distance);
+        }
+    }
+};

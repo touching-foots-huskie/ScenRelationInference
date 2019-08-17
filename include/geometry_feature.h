@@ -21,6 +21,10 @@ const double cylinder_threshold = 0.9;
 // spatial checking should have overlap larger than this
 const double overlap_threshold_in_check = 0.2;  
 
+// Roderegas 
+void Rogas(const Eigen::Ref<Eigen::Vector3d>& direction, double theta,
+           Eigen::Ref<Eigen::Matrix3d> transform);
+
 void CalculateDiffPlane2Plane(const Eigen::Ref<Eigen::MatrixXd>& plane_normals,
 							  const Eigen::Ref<Eigen::MatrixXd>& plane_centeral_points,
 							  Eigen::Ref<Eigen::MatrixXd> angle_diff,

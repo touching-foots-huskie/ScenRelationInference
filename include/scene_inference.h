@@ -93,6 +93,7 @@ public:
     void LogSceneStatus(std::string log_file_name);
 
     void RelationshipInference(std::string log_file_name);
+    // Version1
     void FeatureForOptimization(std::vector<Eigen::MatrixXd>& normal_1s,
                                 std::vector<Eigen::MatrixXd>& normal_2s,
                                 std::vector<Eigen::MatrixXd>& center_1s,
@@ -102,6 +103,19 @@ public:
                                 std::vector<int>& object_id_1s, 
                                 std::vector<int>& object_id_2s,
                                 std::vector<int>& support_types);
+    // Version2s
+    /*
+    transform is the transform of the local transform of the feature space,
+    transform distance is the distance between two feature space, 
+    this distance has different meanings in different support systems.
+     */
+    void FeatureForOptimization(std::vector<Eigen::MatrixXd>& transform_1s,
+                                std::vector<Eigen::MatrixXd>& transform_2s,
+                                std::vector<double>& transform_distances,
+                                std::vector<int>& object_id_1s,
+                                std::vector<int>& object_id_2s,
+                                std::vector<int>& support_types);
+
 private:
 	int current_object_id_;
 	std::string object_register_file_;

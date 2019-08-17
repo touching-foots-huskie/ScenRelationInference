@@ -1,5 +1,20 @@
 #include "geometry_feature.h"
 
+void Rogas(const Eigen::Ref<Eigen::Vector3d>& direction, double theta,
+      Eigen::Ref<Eigen::MatrixXd>& transform) {
+        transform = Eigen::Matrix3d::Identity();
+        transform *= cos(theta);
+
+        transform += (1 - cos(theta)) * (direction * direction.transpose());
+
+        Eigen::Matrix3d d_upper;
+        d_upper << 0, -direction(2), direction(1),
+                   direction(2), 0, -direction(0),
+                   -direction(1), direction(0), 0;
+
+        transform += sin(theta) * d_upper;
+};
+
 void CalculateDiffPlane2Plane(const Eigen::Ref<Eigen::MatrixXd>& plane_normals,
                               const Eigen::Ref<Eigen::MatrixXd>& plane_centeral_points,
                               Eigen::Ref<Eigen::MatrixXd> angle_diff,
