@@ -88,11 +88,13 @@ public:
 	void FeatureSupportingRelation();
 	bool ObjectSupportStatus(int object_id, std::map<int, std::pair<int, int> >& id2feature);
 	void RelationshipInference();
-
-    void DisplayRelationship();
+	void DisplayRelationship();
+    void DisplayRelationship(std::map<int, std::vector<int> >& clusters_relationship);
     void LogSceneStatus(std::string log_file_name);
-
-    void RelationshipInference(std::string log_file_name);
+    
+    void RelationshipInference(std::string log_file_name, std::map<int, std::vector<int> >& clusters_relationship);
+	void RelationshipInference(std::string log_file_name);
+	
     // Version1
     void FeatureForOptimization(std::vector<Eigen::MatrixXd>& normal_1s,
                                 std::vector<Eigen::MatrixXd>& normal_2s,

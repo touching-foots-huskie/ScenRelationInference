@@ -356,8 +356,8 @@ void SceneInference::CalculateDiff() {
 	CalculateDiffPlane2Plane(plane_normals_, plane_central_points_,
 		angle_diff_plane2plane_, dist_diff_plane2plane_);
 
-    DisplayMatrix(dist_diff_plane2plane_.block(0, 0, 1, num_of_plane_), "Dist Plane2Plane");
-    DisplayMatrix(angle_diff_plane2plane_.block(0, 0, 1, num_of_plane_), "Angle Plane2Plane");
+    // DisplayMatrix(dist_diff_plane2plane_.block(0, 0, 1, num_of_plane_), "Dist Plane2Plane");
+    // DisplayMatrix(angle_diff_plane2plane_.block(0, 0, 1, num_of_plane_), "Angle Plane2Plane");
 
 	// Plane2Surf
 	CalculateDiffPlane2Surf(plane_normals_, surf_directions_, plane_central_points_,
@@ -567,7 +567,7 @@ void SceneInference::FeatureSupportingRelation() {
 		}
 	}
 
-    DisplayMatrix(feature_supporting_, "Feature Supporting");
+    // DisplayMatrix(feature_supporting_, "Feature Supporting");
 };
 
 bool SceneInference::ObjectSupportStatus(int object_id, 
@@ -786,6 +786,51 @@ void SceneInference::DisplayRelationship(){
     }
 };
 
+void SceneInference::DisplayRelationship(std::map<int, std::vector<int> >& clusters_relationship){
+	clusters_relationship.clear(); // clear previous relationships for clusters
+    for(auto object_relationship : object_relationship_){
+        int object_id = object_relationship.first;
+        if(object_deprecated_[object_id]){
+            continue;
+        }
+        std::cout << " --------------------- " << std::endl;
+        std::cout << "Object : " << object_names_[object_id] << " : "
+                  << object_id << std::endl;
+
+        for(auto feature : object_relationship.second) {
+            if(feature.first >= num_of_plane_){
+                std::cout << "surf " << feature.first << " of ";
+                int feature_object_id = surf_feature2id[feature.first - num_of_plane_];
+                std::cout << object_names_[feature_object_id] << ", ";
+            }
+            else{
+                std::cout << "plane " << feature.first << " of ";
+                int feature_object_id = plane_feature2id[feature.first];
+                std::cout << object_names_[feature_object_id] << ", ";
+            }
+
+            std::cout << " | ";
+
+            if(feature.second >= num_of_plane_){
+                std::cout << "surf " << feature.second << " of ";
+                int feature_object_id = surf_feature2id[feature.second - num_of_plane_];
+                std::cout << object_names_[feature_object_id] << ".";
+				clusters_relationship[object_id].push_back(feature_object_id);
+				clusters_relationship[feature_object_id].push_back(object_id);
+            }
+            else{
+                std::cout << "plane " << feature.second << " of ";
+                int feature_object_id = plane_feature2id[feature.second];
+                std::cout << object_names_[feature_object_id] << ".";
+				clusters_relationship[object_id].push_back(feature_object_id);
+				clusters_relationship[feature_object_id].push_back(object_id);
+            }
+
+            std::cout << std::endl;
+        }
+    }
+};
+
 void SceneInference::LogSceneStatus(std::string log_file_name){
     configuru::Config cfg = configuru::Config::object();
     // update object level information 
@@ -820,7 +865,7 @@ void SceneInference::LogSceneStatus(std::string log_file_name){
     }
 
     std::string current_path = GetCurrentWorkingDir();
-	configuru::dump_file(current_path + "/log/" + 
+	configuru::dump_file(current_path + 
                          log_file_name, cfg, configuru::JSON);
     
 };
@@ -828,8 +873,22 @@ void SceneInference::LogSceneStatus(std::string log_file_name){
 /*
 Relationship Inferenece is a combined operation on geometry inference
  */
-void SceneInference::RelationshipInference(std::string log_file_name){
+void SceneInference::RelationshipInference(std::string log_file_name, std::map<int, std::vector<int> >& clusters_relationship_){
+    if(num_of_object_ == 0) {
+        return;
+    }
     CalculateDiff();
+    FeatureSupportingRelation();
+    RelationshipInference();
+    DisplayRelationship(clusters_relationship_);
+    LogSceneStatus(log_file_name);
+};
+
+void SceneInference::RelationshipInference(std::string log_file_name){
+    if(num_of_object_ == 0) {
+        return;
+    }
+	CalculateDiff();
     FeatureSupportingRelation();
     RelationshipInference();
     DisplayRelationship();
@@ -886,7 +945,7 @@ void SceneInference::FeatureForOptimization(std::vector<Eigen::MatrixXd>& normal
             }
             else{
                 // plane
-                support_flag += 10;
+                support_flag += 1;
                 int feature_object_id = plane_feature2id[feature.second];
                 object_id_2s.push_back(feature_object_id);
                 // normal & center
