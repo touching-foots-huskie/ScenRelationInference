@@ -1,7 +1,7 @@
 #include "geometry_feature.h"
 
 void Rogas(const Eigen::Ref<Eigen::Vector3d>& direction, double theta,
-      Eigen::Ref<Eigen::MatrixXd>& transform) {
+      Eigen::Ref<Eigen::MatrixXd> transform) {
         transform = Eigen::Matrix3d::Identity();
         transform *= cos(theta);
 
