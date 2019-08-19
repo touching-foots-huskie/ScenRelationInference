@@ -87,13 +87,16 @@ public:
 	void CalculateDiff(); 
 	void FeatureSupportingRelation();
 	bool ObjectSupportStatus(int object_id, std::map<int, std::pair<int, int> >& id2feature);
-	void RelationshipInference();
+	
 	void DisplayRelationship();
     void DisplayRelationship(std::map<int, std::vector<int> >& clusters_relationship);
     void LogSceneStatus(std::string log_file_name);
     
-    void RelationshipInference(std::string log_file_name, std::map<int, std::vector<int> >& clusters_relationship);
-	void RelationshipInference(std::string log_file_name);
+    void RelationshipInference(bool output);
+    void RelationshipInference(std::string log_file_name,
+                               std::map<int, std::vector<int> >& clusters_relationship,
+                               bool output);
+	void RelationshipInference(std::string log_file_name, bool output);
 	
     // Version1
     void FeatureForOptimization(std::vector<Eigen::MatrixXd>& normal_1s,

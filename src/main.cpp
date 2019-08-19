@@ -52,7 +52,7 @@ int main() {
     }
 
     // Inference geometry relationship
-    scene_inference.RelationshipInference("test_log.json");
+    scene_inference.RelationshipInference("test_log.json", true);
     // test output
     std::vector<Eigen::MatrixXd> normal_1s;
     std::vector<Eigen::MatrixXd> normal_2s;
