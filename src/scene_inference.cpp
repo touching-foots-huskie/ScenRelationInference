@@ -742,6 +742,7 @@ void SceneInference::RelationshipInference() {
 
             std::cout << "Supported Status of " << object_names_[object.first] << " : ";
             std::cout << object.first << " is " << supported_status << std::endl; 
+            object_supported_[object.first] = supported_status;
 			std::vector<std::pair<int, int> > relationships;
 			object_relationship_[object.first] = relationships;
 			for (auto supports : relationship_object) {
@@ -912,9 +913,15 @@ void SceneInference::FeatureForOptimization(std::vector<Eigen::MatrixXd>& normal
     
     for(auto object_relationship : object_relationship_){
         int object_id = object_relationship.first;
+        // if object deprecated
         if(object_deprecated_[object_id]){
             continue;
         } 
+        // if object not fully supported
+        if(!object_supported_.at(object_id)) {
+            continue;
+        }
+        
         for(auto feature : object_relationship.second) {
             int support_flag = 0;
             if(feature.first >= num_of_plane_){

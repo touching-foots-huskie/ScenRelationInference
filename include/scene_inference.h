@@ -175,6 +175,7 @@ private:
 	Eigen::MatrixXd feature_supporting_;
 	Eigen::MatrixXd plane_feature_supporting_;  
 	Eigen::MatrixXd surf_feature_supporting_;
+    std::map<int, bool> object_supported_;
 	
 	// counting data
 	int num_of_object_;   
