@@ -14,9 +14,9 @@
 std::string GetCurrentWorkingDir( void );
 
 // Parse Matrix in Transpose version
-Eigen::MatrixXd MatrixParse(configuru::Config& config_array);
-Eigen::MatrixXd MatrixParseT(configuru::Config& config_array);
-Eigen::MatrixXd VetorParse(configuru::Config& config_array);
+Eigen::MatrixXd MatrixParse(const configuru::Config& config_array);
+Eigen::MatrixXd MatrixParseT(const configuru::Config& config_array);
+Eigen::MatrixXd VetorParse(const configuru::Config& config_array);
 
 // Write 4dMatrix into Config
 void WriteMatrix4d(configuru::Config& config,
