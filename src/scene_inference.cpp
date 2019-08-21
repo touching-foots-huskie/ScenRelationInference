@@ -353,16 +353,18 @@ void SceneInference::CalculateDiff() {
     surf_feature_supporting_ = Eigen::MatrixXd::Zero(1, num_of_surf_);
 
     // Plane2Plane
-	CalculateDiffPlane2Plane(plane_normals_, plane_central_points_,
-		angle_diff_plane2plane_, dist_diff_plane2plane_);
+    if(num_of_plane_ != 0)
+        CalculateDiffPlane2Plane(plane_normals_, plane_central_points_,
+            angle_diff_plane2plane_, dist_diff_plane2plane_);
 
     // DisplayMatrix(dist_diff_plane2plane_.block(0, 0, 1, num_of_plane_), "Dist Plane2Plane");
     // DisplayMatrix(angle_diff_plane2plane_.block(0, 0, 1, num_of_plane_), "Angle Plane2Plane");
 
 	// Plane2Surf
-	CalculateDiffPlane2Surf(plane_normals_, surf_directions_, plane_central_points_,
-		surf_cenetral_points_, angle_diff_plane2surf_, dist_diff_plane2surf_);
-	
+    if((num_of_plane_ != 0) && (num_of_surf_ != 0) )
+        CalculateDiffPlane2Surf(plane_normals_, surf_directions_, plane_central_points_,
+            surf_cenetral_points_, angle_diff_plane2surf_, dist_diff_plane2surf_);
+        
     /*
     // TODO: delete it
     DisplayMatrix(dist_diff_plane2surf_.block(7, 0, 6, num_of_surf_), "Dist Plane2Surf");
@@ -371,11 +373,14 @@ void SceneInference::CalculateDiff() {
     
 
 	// Surf2Surf
-	CalculateDiffSurf2Surf(surf_directions_, surf_cenetral_points_, dist_diff_surf2surf_);
+    if(num_of_surf_ != 0)
+        CalculateDiffSurf2Surf(surf_directions_, surf_cenetral_points_, dist_diff_surf2surf_);
 
 	// Calculate the Supportting Result
-	SupportingStatus(plane_normals_, gravity_direction_, plane_feature_supporting_);
-	SupportingStatusV2(surf_directions_, gravity_direction_, surf_feature_supporting_);
+    if(num_of_plane_ != 0)
+	    SupportingStatus(plane_normals_, gravity_direction_, plane_feature_supporting_);
+    if(num_of_surf_ != 0)
+	    SupportingStatusV2(surf_directions_, gravity_direction_, surf_feature_supporting_);
 
 };
 
@@ -727,25 +732,6 @@ bool SceneInference::ObjectSupportStatus(int object_id,
 	return true;
 };
 
-void SceneInference::RelationshipInference() {
-	object_relationship_.clear();
-	for (auto object : object_deprecated_) {
-		if (!object.second) {
-			// if object is not deprecated, then check its relationship
-			std::map<int, std::pair<int, int> > relationship_object;
-			bool supported_status = ObjectSupportStatus(object.first, relationship_object);
-
-            std::cout << "Supported Status of " << object_names_[object.first] << " : ";
-            std::cout << object.first << " is " << supported_status << std::endl; 
-			std::vector<std::pair<int, int> > relationships;
-			object_relationship_[object.first] = relationships;
-			for (auto supports : relationship_object) {
-				object_relationship_[object.first].push_back(supports.second);
-			}
-		}
-	}
-};
-
 void SceneInference::DisplayRelationship(){
     for(auto object_relationship : object_relationship_){
         int object_id = object_relationship.first;
@@ -873,25 +859,50 @@ void SceneInference::LogSceneStatus(std::string log_file_name){
 /*
 Relationship Inferenece is a combined operation on geometry inference
  */
-void SceneInference::RelationshipInference(std::string log_file_name, std::map<int, std::vector<int> >& clusters_relationship_){
+void SceneInference::RelationshipInference(bool output) {
+	object_relationship_.clear();
+	for (auto object : object_deprecated_) {
+		if (!object.second) {
+			// if object is not deprecated, then check its relationship
+			std::map<int, std::pair<int, int> > relationship_object;
+			bool supported_status = ObjectSupportStatus(object.first, relationship_object);
+            if(output) {
+                std::cout << "Supported Status of " << object_names_[object.first] << " : ";
+                std::cout << object.first << " is " << supported_status << std::endl;
+            }
+             
+            object_supported_[object.first] = supported_status;
+			std::vector<std::pair<int, int> > relationships;
+			object_relationship_[object.first] = relationships;
+			for (auto supports : relationship_object) {
+				object_relationship_[object.first].push_back(supports.second);
+			}
+		}
+	}
+};
+
+void SceneInference::RelationshipInference(std::string log_file_name, 
+                                           std::map<int, std::vector<int> >& clusters_relationship_,
+                                           bool output){
     if(num_of_object_ == 0) {
         return;
     }
     CalculateDiff();
     FeatureSupportingRelation();
-    RelationshipInference();
+    RelationshipInference(output);
     DisplayRelationship(clusters_relationship_);
     LogSceneStatus(log_file_name);
 };
 
-void SceneInference::RelationshipInference(std::string log_file_name){
+void SceneInference::RelationshipInference(std::string log_file_name, bool output){
     if(num_of_object_ == 0) {
         return;
     }
 	CalculateDiff();
     FeatureSupportingRelation();
-    RelationshipInference();
-    DisplayRelationship();
+    RelationshipInference(output);
+    if(output)
+        DisplayRelationship();
     LogSceneStatus(log_file_name);
 };
 
@@ -907,9 +918,15 @@ void SceneInference::FeatureForOptimization(std::vector<Eigen::MatrixXd>& normal
     
     for(auto object_relationship : object_relationship_){
         int object_id = object_relationship.first;
+        // if object deprecated
         if(object_deprecated_[object_id]){
             continue;
         } 
+        // if object not fully supported
+        if(!object_supported_.at(object_id)) {
+            continue;
+        }
+
         for(auto feature : object_relationship.second) {
             int support_flag = 0;
             if(feature.first >= num_of_plane_){

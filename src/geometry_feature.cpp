@@ -468,7 +468,7 @@ void SupportingStatusV2(const Eigen::Ref<Eigen::MatrixXd>& surf_directions,
 	                    Eigen::Ref<Eigen::MatrixXd> supporting_status) {
 	
     supporting_status = gravity_direction.transpose() * surf_directions;
-    DisplayMatrix(supporting_status, "Supporting_Status");
+    // DisplayMatrix(supporting_status, "Supporting_Status");
 
 	double surf_threshold = support_direction_threshold2;
 	// Supporting Feature
