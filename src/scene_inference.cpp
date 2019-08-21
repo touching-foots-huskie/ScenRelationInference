@@ -149,7 +149,7 @@ void SceneInference::AddObject(int object_id, std::string object_name) {
 	object_name = (std::string) geometry_config["object_name"];
 
     // Inner Transform
-    object_inner_transform_[object_id] = MatrixParse(geometry_config["inner_transform"]);
+    object_inner_transform_[object_id] = MatrixParse(geometry_config["inner_transform"]).inverse();
     Eigen::MatrixXd rotation_matrix = object_inner_transform_[object_id].block(0, 0, 3, 3);
     Eigen::MatrixXd transition_matrix = object_inner_transform_[object_id].block(0, 3, 3, 1);
 

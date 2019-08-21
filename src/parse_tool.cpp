@@ -8,7 +8,7 @@ std::string GetCurrentWorkingDir( void ) {
     return current_working_dir;
 };
 
-Eigen::MatrixXd MatrixParse(configuru::Config& config_array) {
+Eigen::MatrixXd MatrixParse(const configuru::Config& config_array) {
 	int dim1 = config_array.array_size();
 	int dim2 = config_array[0].array_size();
 
@@ -27,7 +27,7 @@ Eigen::MatrixXd MatrixParse(configuru::Config& config_array) {
 };
 
 // Parse Matrix in Transpose version
-Eigen::MatrixXd MatrixParseT(configuru::Config& config_array) {
+Eigen::MatrixXd MatrixParseT(const configuru::Config& config_array) {
 	int dim1 = config_array.array_size();
 	int dim2 = config_array[0].array_size();
 
@@ -48,7 +48,7 @@ Eigen::MatrixXd MatrixParseT(configuru::Config& config_array) {
 /*
 Output of Vector parse is a column vector
  */
-Eigen::MatrixXd VetorParse(configuru::Config& config_array) {
+Eigen::MatrixXd VetorParse(const configuru::Config& config_array) {
 	int dim1 = config_array.array_size();
 	Eigen::MatrixXd parsed_vector;
 	parsed_vector.resize(dim1, 1);
