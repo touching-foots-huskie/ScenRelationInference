@@ -241,12 +241,9 @@ void WriteCylinder(std::string object_name,
     configuru::Config cfg = configuru::Config::object();
 	cfg["object_name"] = object_name;
 
-	double radius = sizes(0);
-	double height = sizes(1);
-
     // half length representation
-    double a = radius;
-    double b =  height / 2.0;
+    double a = sizes(0) / 2.0;  // radius
+    double b = sizes(1) / 2.0;  // height
 
     cfg["inner_transform"] = configuru::Config::array(
         {
@@ -378,8 +375,8 @@ void WritePlane(std::string object_name,
     configuru::Config cfg = configuru::Config::object();
 	cfg["object_name"] = object_name;
 
-	double length = sizes(0);
-	double width = sizes(1);
+	double length = sizes(0) / 2.0;
+	double width = sizes(1) / 2.0;
 
     // half length representation
     double a = length;
