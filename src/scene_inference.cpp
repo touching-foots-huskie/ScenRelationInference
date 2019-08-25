@@ -907,14 +907,14 @@ void SceneInference::RelationshipInference(std::string log_file_name, bool outpu
 };
 
 void SceneInference::FeatureForOptimization(std::vector<Eigen::MatrixXd>& normal_1s,
-                                std::vector<Eigen::MatrixXd>& normal_2s,
-                                std::vector<Eigen::MatrixXd>& center_1s,
-                                std::vector<Eigen::MatrixXd>& center_2s,
-                                std::vector<double>& radius_1s,
-                                std::vector<double>& radius_2s,
-                                std::vector<int>& object_id_1s, 
-                                std::vector<int>& object_id_2s,
-                                std::vector<int>& support_types) {
+                                            std::vector<Eigen::MatrixXd>& normal_2s,
+                                            std::vector<Eigen::MatrixXd>& center_1s,
+                                            std::vector<Eigen::MatrixXd>& center_2s,
+                                            std::vector<double>& radius_1s,
+                                            std::vector<double>& radius_2s,
+                                            std::vector<int>& object_id_1s, 
+                                            std::vector<int>& object_id_2s,
+                                            std::vector<int>& support_types) {
     
     for(auto object_relationship : object_relationship_){
         int object_id = object_relationship.first;
@@ -977,16 +977,21 @@ void SceneInference::FeatureForOptimization(std::vector<Eigen::MatrixXd>& normal
 };
 
 void SceneInference::FeatureForOptimization(std::vector<Eigen::MatrixXd>& transform_1s,
-                            std::vector<Eigen::MatrixXd>& transform_2s,
-                            std::vector<double>& transform_distances,
-                            std::vector<int>& object_id_1s,
-                            std::vector<int>& object_id_2s,
-                            std::vector<int>& support_types) {
+                                            std::vector<Eigen::MatrixXd>& transform_2s,
+                                            std::vector<double>& transform_distances,
+                                            std::vector<int>& object_id_1s,
+                                            std::vector<int>& object_id_2s,
+                                            std::vector<int>& support_types,
+                                            std::vector<bool>& support_status) {
      for(auto object_relationship : object_relationship_){
         int object_id = object_relationship.first;
         if(object_deprecated_[object_id]){
             continue;
         } 
+        // if object not fully supported
+        if(!object_supported_.at(object_id)) {
+            continue;
+        }
 
         for(auto feature : object_relationship.second) {
             int support_flag = 0;
@@ -1045,6 +1050,7 @@ void SceneInference::FeatureForOptimization(std::vector<Eigen::MatrixXd>& transf
                 support_flag += 0;
                 int feature_object_id = surf_feature2id[feature.second - num_of_plane_];
                 object_id_2s.emplace_back(feature_object_id);
+                support_status.emplace_back(object_supported_.at(feature_object_id));
                 // normal
                 Eigen::Vector3d normal_2s = opt_surf_directions_.block(0, feature.second - num_of_plane_, 3, 1);
 
@@ -1067,6 +1073,7 @@ void SceneInference::FeatureForOptimization(std::vector<Eigen::MatrixXd>& transf
                 support_flag += 1;
                 int feature_object_id = plane_feature2id[feature.second];
                 object_id_2s.emplace_back(feature_object_id);
+                support_status.emplace_back(object_supported_.at(feature_object_id));
                 // normal & center
                 Eigen::Vector3d normal_2s = opt_plane_normals_.block(0, feature.second, 3, 1);
                 // rotation axis

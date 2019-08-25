@@ -6,8 +6,8 @@
 #include "parse_tool.h"
 
 // const value
-const double plane2plane_angular_threshold = 0.02;
-const double plane2plane_dist_threshold = 0.025;
+const double plane2plane_angular_threshold = 0.01;
+const double plane2plane_dist_threshold = 0.010;
 
 const double plane2surf_angular_threshold = 0.15;  // different between plane2plane & plane2surf
 const double plane2surf_dist_threshold = 0.025;
@@ -119,7 +119,8 @@ public:
                                 std::vector<double>& transform_distances,
                                 std::vector<int>& object_id_1s,
                                 std::vector<int>& object_id_2s,
-                                std::vector<int>& support_types);
+                                std::vector<int>& support_types,
+                                std::vector<bool>& support_status);
 
 private:
 	int current_object_id_;
