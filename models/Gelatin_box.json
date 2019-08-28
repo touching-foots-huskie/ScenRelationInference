@@ -1,5 +1,6 @@
 {
 	"object_name":       "Gelatin_box",
+	"symmetric_axis":    222,
 	"inner_transform":   [
 		[ 0.973666, 0.227978, 0.0, 0.0008 ],
 		[ -0.227978, 0.973666, 0.0, -0.0011 ],

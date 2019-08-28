@@ -1,5 +1,6 @@
 {
 	"object_name":       "Mustard_bottle",
+	"symmetric_axis":    222,
 	"inner_transform":   [
 		[ 0.929774, -0.368132, 0.0, 0.0002 ],
 		[ 0.368132, 0.929774, 0.0, 0.0015 ],

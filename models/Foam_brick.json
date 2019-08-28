@@ -1,5 +1,6 @@
 {
 	"object_name":       "Foam_brick",
+	"symmetric_axis":    222,
 	"inner_transform":   [
 		[ 0.99955, -0.0299955, 0.0, 0.0 ],
 		[ 0.0299955, 0.99955, 0.0, 0.0 ],

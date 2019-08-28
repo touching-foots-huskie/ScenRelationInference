@@ -1,5 +1,6 @@
 {
 	"object_name":       "Cracker_box",
+	"symmetric_axis":    222,
 	"inner_transform":   [
 		[ 1.0, 0.0, 0.0, 0.0029 ],
 		[ 0.0, 1.0, 0.0, 0.0017 ],

@@ -1,5 +1,6 @@
 {
 	"object_name":       "Potted_meat_can",
+	"symmetric_axis":    222,
 	"inner_transform":   [
 		[ 0.9987, 0.0499767, -0.00999983, 0.0024 ],
 		[ -0.0499792, 0.99875, 0.0, 0.0 ],

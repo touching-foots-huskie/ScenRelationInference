@@ -1,5 +1,6 @@
 {
 	"object_name":       "Bleach_cleanser",
+	"symmetric_axis":    222,
 	"inner_transform":   [
 		[ 1.0, 0.0, 0.0, 0.0023 ],
 		[ 0.0, 1.0, 0.0, 0.0002 ],

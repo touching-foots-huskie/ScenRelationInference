@@ -7,7 +7,7 @@ void WriteBox(std::string object_name,
 
 	configuru::Config cfg = configuru::Config::object();
 	cfg["object_name"] = object_name;
-
+    cfg["symmetric_axis"] = 222;
 	double length = sizes(0);
 	double width = sizes(1);
 	double height = sizes(2);
@@ -240,7 +240,7 @@ void WriteCylinder(std::string object_name,
 {
     configuru::Config cfg = configuru::Config::object();
 	cfg["object_name"] = object_name;
-
+    cfg["symmetric_axis"] = 221;
     // half length representation
     double a = sizes(0) / 2.0;  // radius
     double b = sizes(1) / 2.0;  // height
@@ -374,6 +374,7 @@ void WritePlane(std::string object_name,
     
     configuru::Config cfg = configuru::Config::object();
 	cfg["object_name"] = object_name;
+    cfg["symmetric_axis"] = 221;
 
 	double length = sizes(0) / 2.0;
 	double width = sizes(1) / 2.0;

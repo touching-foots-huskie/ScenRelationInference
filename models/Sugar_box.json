@@ -1,5 +1,6 @@
 {
 	"object_name":       "Sugar_box",
+	"symmetric_axis":    222,
 	"inner_transform":   [
 		[ 0.999278, 0.0, 0.0379909, 0.0 ],
 		[ 0.0, 1.0, 0.0, 0.0 ],

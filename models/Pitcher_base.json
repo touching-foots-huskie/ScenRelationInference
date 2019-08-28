@@ -1,5 +1,6 @@
 {
 	"object_name":       "Pitcher_base",
+	"symmetric_axis":    222,
 	"inner_transform":   [
 		[ 0.993956, -0.109778, 0.0, 0.0 ],
 		[ 0.109778, 0.993956, 0.0, 0.0001 ],
