@@ -3,6 +3,7 @@
         "name" : "Table",
         "size" : [1.5, 1.5],
         "type" : 0,
+        "symmetric_axis" : 221,
         "inner_transform" : [
             [ 1.0, 0.0, 0.0, 0.0 ],
             [ 0.0, 1.0, 0.0, 0.0 ],
@@ -16,6 +17,7 @@
         "name" : "Master_chef_can",
         "size" : [0.102, 0.14],
         "type" : 2,
+        "symmetric_axis" : 221,
         "inner_transform" : [
             [ 1.0, 0.0, 0.0, 0.0008 ],
             [ 0.0, 1.0, 0.0, 0.0 ],
@@ -29,6 +31,7 @@
         "name" : "Cracker_box",
         "size" : [0.060, 0.160, 0.213],
         "type" : 1,
+        "symmetric_axis" : 222,
         "inner_transform" : [
             [ 1, 0, 0, 0.0029 ],
             [ 0, 1, 0, 0.0017 ],
@@ -42,6 +45,7 @@
         "name" : "Sugar_box",
         "size" : [0.053,0.105,0.186],
         "type" : 1,
+        "symmetric_axis" : 222,
         "inner_transform" : [
             [ 0.999278, 0, 0.0379909, 0 ],
             [ 0, 1, 0, 0 ],
@@ -55,6 +59,7 @@
         "name" : "Tomato_soup_can",
         "size" : [0.068, 0.102],
         "type" : 2,
+        "symmetric_axis" : 221,
         "inner_transform" : [
             [ 1, 0, 0, 0 ],
             [ 0, 1, 0, -0.0016 ],
@@ -68,6 +73,7 @@
         "name" : "Mustard_bottle",
         "size" : [0.097, 0.055, 0.191],
         "type" : 1,
+        "symmetric_axis" : 2,
         "inner_transform" :[
             [ 0.929774, -0.368132, 0, 0.0002 ],
             [ 0.368132, 0.929774, 0, 0.0015 ],
@@ -81,6 +87,7 @@
         "name" : "Tuna_fish_can",
         "size" : [0.084, 0.033],
         "type" : 2,
+        "symmetric_axis" : 221,
         "inner_transform" : [
             [ 1.0, 0.0, 0.0, 0.0 ],
             [ 0.0, 1.0, 0.0, 0.0 ],
@@ -94,6 +101,7 @@
         "name" : "Pudding_box",
         "size" : [0.113, 0.09, 0.039],
         "type" : 1,
+        "symmetric_axis" : 222,
         "inner_transform" :[
             [ 0.881627, 0.470249, 0.0399893, -0.0003 ],
             [ -0.47025, 0.882477, -0.00999183, -0.0039 ],
@@ -107,6 +115,7 @@
         "name" : "Gelatin_box",
         "size" : [0.073,0.089,0.027],
         "type" : 1,
+        "symmetric_axis" : 222,
         "inner_transform" : [
             [ 0.973666, 0.227978, 0, 0.0008 ],
             [ -0.227978, 0.973666, 0, -0.0011 ],
@@ -120,6 +129,7 @@
         "name" : "Potted_meat_can",
         "size" : [0.102, 0.06, 0.083],
         "type" : 1,
+        "symmetric_axis" : 222,
         "inner_transform" : [
             [ 0.9987, 0.0499767, -0.00999983, 0.0024 ],
             [ -0.0499792, 0.99875, 0, 0 ],
@@ -133,6 +143,7 @@
         "name" : "Banana",
         "size" : [0.109, 0.178, 0.037],
         "type" : 1,
+        "symmetric_axis" : 0,
         "inner_transform" : [
             [ 1, 0, 0, -0.0185 ],
             [ 0, 1, 0, 0.0116 ],
@@ -146,6 +157,7 @@
         "name" : "Pitcher_base",
         "size" : [0.149, 0.145, 0.242],
         "type" : 1,
+        "symmetric_axis" : 0,
         "inner_transform" : [
             [ 0.993956, -0.109778, 0, 0 ],
             [ 0.109778, 0.993956, 0, 0.0001 ],
@@ -159,6 +171,7 @@
         "name" : "Bleach_cleanser",
         "size" : [0.094,0.049,0.242],
         "type" : 1,
+        "symmetric_axis" : 0,
         "inner_transform" : [
             [ 1, 0, 0, 0.0023 ],
             [ 0, 1, 0, 0.0002 ],
@@ -172,6 +185,7 @@
         "name" : "Bowl",
         "size" : [0.161, 0.161, 0.055],
         "type" : 1,
+        "symmetric_axis" : 1,
         "inner_transform" : [
             [ 1, 0, 0, -0.0003 ],
             [ 0, 1, 0, 0.0005 ],
@@ -185,6 +199,7 @@
         "name" : "Mug",
         "size" : [0.117,0.093,0.081],
         "type" : 1,
+        "symmetric_axis" : 0,
         "inner_transform" : [
             [ 1.0, 0.0, 0.0, 0.0 ],
             [ 0.0, 1.0, 0.0, 0.0 ],
@@ -198,6 +213,7 @@
         "name" : "Power_drill",
         "size" : [0.184,0.187,0.057],
         "type" : 1,
+        "symmetric_axis" : 0,
         "inner_transform" : [
             [ 1, 0, 0, 0.00909999 ],
             [ 0, 1, 0, 0.0207 ],
@@ -211,6 +227,7 @@
         "name" : "Wood_block",
         "size" : [0.091,0.091,0.206],
         "type" : 1,
+        "symmetric_axis" : 222,
         "inner_transform" : [
             [ 0.980018, -0.198659, 0.00999983, 0.0022 ],
             [ 0.198826, 0.979831, -0.0199977, -0.0001 ],
@@ -224,6 +241,7 @@
         "name" : "Scissors",
         "size" : [0.096,0.201,0.016],
         "type" : 1,
+        "symmetric_axis" : 0,
         "inner_transform" : [
             [ 1.0, 0.0, 0.0, 0.0 ],
             [ 0.0, 1.0, 0.0, 0.0 ],
@@ -237,6 +255,7 @@
         "name" : "Large_marker",
         "size" : [0.021,0.121,0.019],
         "type" : 1,
+        "symmetric_axis" : 0,
         "inner_transform" : [
             [ 1.0, 0.0, 0.0, 0.0 ],
             [ 0.0, 1.0, 0.0, -0.0021 ],
@@ -250,6 +269,7 @@
         "name" : "Large_clamp",
         "size" : [0.12,0.171,0.039],
         "type" : 1,
+        "symmetric_axis" : 0,
         "inner_transform" : [
             [ 1.0, 0.0, 0.0, 0.0 ],
             [ 0.0, 1.0, 0.0, 0.0 ],
@@ -263,6 +283,7 @@
         "name" : "Extra_Large_clamp",
         "size" : [0.21,0.164,0.036],
         "type" : 1,
+        "symmetric_axis" : 0,
         "inner_transform" : [
             [ 1.0, 0.0, 0.0, 0.0 ],
             [ 0.0, 1.0, 0.0, 0.0 ],
@@ -276,6 +297,7 @@
         "name" : "Foam_brick",
         "size" : [0.053,0.078,0.051],
         "type" : 1,
+        "symmetric_axis" : 222,
         "inner_transform" : [
             [ 0.99955, -0.0299955, 0, 0 ],
             [ 0.0299955, 0.99955, 0, 0 ],

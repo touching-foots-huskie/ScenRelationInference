@@ -111,6 +111,7 @@ bool SymmetricFix(const Eigen::Ref<Eigen::MatrixXd>& pose_1,
     }
     default: {
         std::cout << "Symmetric Mode didn't implemented" << std::endl;
+        return false;
         break; 
     }
         
