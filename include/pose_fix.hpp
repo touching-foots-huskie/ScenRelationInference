@@ -9,6 +9,7 @@ Return if the two poses are similar in symmetric & give transform
  */
 bool SymmetricFix(const Eigen::Ref<Eigen::MatrixXd>& pose_1,
                   const Eigen::Ref<Eigen::MatrixXd>& pose_2,
+                  const Eigen::Ref<Eigen::MatrixXd>& inner_transform,
                   Eigen::Ref<Eigen::MatrixXd> fix_transform,
                   int symmetric_code) {
     Eigen::Vector3d x_axis;
@@ -64,7 +65,8 @@ bool SymmetricFix(const Eigen::Ref<Eigen::MatrixXd>& pose_1,
             return true;
         }
         else {
-            fix_transform = x_180;
+            fix_transform = inner_transform.inverse() * x_180 *
+                inner_transform;
             return true;
         }
         break;
@@ -77,17 +79,20 @@ bool SymmetricFix(const Eigen::Ref<Eigen::MatrixXd>& pose_1,
         }
         else if((x_dot > 0) && (y_dot < 0) && (z_dot < 0)) {
             // rotate from x_axis    
-            fix_transform = x_180;
+            fix_transform = inner_transform.inverse() * x_180
+                * inner_transform;
             return true;
         }
         else if((x_dot < 0) && (y_dot > 0) && (z_dot < 0)) {
             // rotate from y_axis    
-            fix_transform = y_180;
+            fix_transform = inner_transform.inverse() * y_180
+                * inner_transform;
             return true;
         }
         else if((x_dot < 0) && (y_dot < 0) && (z_dot > 0)) {
             // rotate from z_axis    
-            fix_transform = z_180;
+            fix_transform = inner_transform.inverse() * z_180
+                * inner_transform;
             return true;
         }
         else {
@@ -100,7 +105,8 @@ bool SymmetricFix(const Eigen::Ref<Eigen::MatrixXd>& pose_1,
         // box bottle
         if((x_dot < 0) && (y_dot < 0) && (z_dot > 0)) {
             // rotate from z_axis    
-            fix_transform = z_180;
+            fix_transform = inner_transform.inverse() * z_180
+                * inner_transform;
             return true;
         }
         else {
