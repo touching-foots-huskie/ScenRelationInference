@@ -21,6 +21,9 @@ const double cylinder_threshold = 0.9;
 // spatial checking should have overlap larger than this
 const double overlap_threshold_in_check = 0.2;  
 
+// gravity leverage
+const double gravity_leverage_threshold = 0.015;
+
 // Roderegas 
 void Rogas(const Eigen::Ref<Eigen::Vector3d>& direction, double theta,
            Eigen::Ref<Eigen::MatrixXd> transform);
@@ -110,5 +113,6 @@ supporting_status | Dim:[1, N]
 void SupportingStatusV2(const Eigen::Ref<Eigen::MatrixXd>& surf_directions,
 						const Eigen::Ref<Eigen::MatrixXd>& gravity_direction,
 						Eigen::Ref<Eigen::MatrixXd> supporting_status);
+
 
 #endif

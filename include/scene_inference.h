@@ -13,6 +13,7 @@ const double plane2surf_angular_threshold = 0.15;  // different between plane2pl
 const double plane2surf_dist_threshold = 0.025;
 
 const double surf2surf_dist_threshold = 0.025;
+const double surf_threshold_ratio = 0.2;
 
 // If one feature is unprecise, then we can leverage the threshold
 const double unprecise_leverage = 3.0;

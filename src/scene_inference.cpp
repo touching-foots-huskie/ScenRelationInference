@@ -44,14 +44,19 @@ void ProjectionFeatureManager::AddFeature(int feature_id,
 
 	for (int i = 0; i < N1 - 1; i++) {
 		Eigen::Vector3d this_edge = pro_edges_1.block(0, i, 3, 1);
-		pro_normals.block(0, i, 3, 1) = this_edge.cross(z_axis);
+        Eigen::Vector3d this_norm = this_edge.cross(z_axis);
+        this_norm /= this_norm.norm();
+		pro_normals.block(0, i, 3, 1) = this_norm;
 	}
 
 	// col start from 0
 	Eigen::Vector3d last_edge_1 = projected_boundary_points_1.col(N1 - 1) -
 		projected_boundary_points_1.col(0);
 
-	pro_normals.block(0, N1 - 1, 3, 1) = last_edge_1.cross(z_axis);
+	 
+    Eigen::Vector3d this_norm = last_edge_1.cross(z_axis);
+    this_norm /= this_norm.norm();
+    pro_normals.block(0, N1 - 1, 3, 1) = this_norm;
 
 	// edges2
 	Eigen::MatrixXd pro_normals_2 = projected_boundary_points_2.block(0, 0, 3, N2 - 1)
@@ -59,15 +64,19 @@ void ProjectionFeatureManager::AddFeature(int feature_id,
 
 	for (int i = 0; i < N2 - 1; i++) {
 		Eigen::Vector3d this_edge = pro_normals_2.block(0, i, 3, 1);
-		pro_normals.block(0, N1 + i, 3, 1) = this_edge.cross(z_axis);
+        this_norm = this_edge.cross(z_axis);
+        this_norm /= this_norm.norm();
+		pro_normals.block(0, N1 + i, 3, 1) = this_norm;
 	}
 
 	// col start from 0
 	Eigen::Vector3d last_edge_2 = projected_boundary_points_2.col(N2 - 1) -
 		projected_boundary_points_2.col(0);
 
-	pro_normals.block(0, N1 + N2 - 1, 3, 1) = last_edge_2.cross(z_axis);
-
+    this_norm = last_edge_2.cross(z_axis);
+    this_norm /= this_norm.norm();
+	pro_normals.block(0, N1 + N2 - 1, 3, 1) = this_norm;
+    // normalize the norms
 	ConcatMatrix(projection_norms_, pro_normals);
 };
 
@@ -463,7 +472,8 @@ void SceneInference::FeatureSupportingRelation() {
 			}
 
 			// If one feature is approximate, threshold will be leverage
-			double dist_threshold = plane2surf_dist_threshold;
+			double dist_threshold = plane2surf_dist_threshold + surf_threshold_ratio * 
+                surf_radius_(j);
 			double angular_threshold = plane2surf_angular_threshold;
 			if (feature_approximated_["plane"][i] || feature_approximated_["surf"][j]) {
 				dist_threshold *= unprecise_leverage;
@@ -531,7 +541,8 @@ void SceneInference::FeatureSupportingRelation() {
             }
 
 			// If one feature is approximate, threshold will be leverage
-			double dist_threshold = surf2surf_dist_threshold;
+			double dist_threshold = surf2surf_dist_threshold + surf_threshold_ratio * 
+                (surf_radius_(i) + surf_radius_(j));
 
 			if (feature_approximated_["surf"][i] || feature_approximated_["surf"][j]) {
 				dist_threshold *= unprecise_leverage;

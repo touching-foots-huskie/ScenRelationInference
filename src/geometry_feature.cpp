@@ -409,14 +409,15 @@ projection_norms | Dim:[D, N2]
 bool GravitySupportCheck(const Eigen::Ref<Eigen::MatrixXd>& boundary_points,
 	                     const Eigen::Ref<Eigen::MatrixXd>& gravity_center,
 	                     const Eigen::Ref<Eigen::MatrixXd>& projection_norms) {
-	                     Eigen::MatrixXd projected_centers = gravity_center.transpose() * projection_norms;  // [1, N2]
-	                     Eigen::MatrixXd projected_points = boundary_points.transpose() * projection_norms;  // [N1, N2]
+    Eigen::MatrixXd projected_centers = gravity_center.transpose() * projection_norms;  // [1, N2]
+    Eigen::MatrixXd projected_points = boundary_points.transpose() * projection_norms;  // [N1, N2]
 
 	int N2 = projection_norms.cols();
 	for (int i = 0; i < N2; i++) {
 		Eigen::MatrixXd projected_points_i = projected_points.col(i);
-		if (projected_points_i.maxCoeff() < projected_centers(i) ||
-			projected_points_i.minCoeff() > projected_centers(i))
+        // false status
+		if ((projected_points_i.maxCoeff() + gravity_leverage_threshold) < projected_centers(i) ||
+			(projected_points_i.minCoeff() - gravity_leverage_threshold) > projected_centers(i))
 		{
 			return false;
 		}
