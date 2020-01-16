@@ -5,7 +5,9 @@ void Rogas(const Eigen::Ref<Eigen::Vector3d>& direction, double theta,
         transform = Eigen::Matrix3d::Identity();
         transform *= cos(theta);
 
-        transform += (1 - cos(theta)) * (direction * direction.transpose());
+		auto tr = direction.transpose();
+
+        transform += (1 - cos(theta)) * (direction * tr);
 
         Eigen::Matrix3d d_upper;
         d_upper << 0, -direction(2), direction(1),
@@ -23,7 +25,9 @@ void CalculateDiffPlane2Plane(const Eigen::Ref<Eigen::MatrixXd>& plane_normals,
 	int D = plane_normals.rows();
 	int N = plane_normals.cols();
 
-	angle_diff = Eigen::MatrixXd::Ones(N, N) + plane_normals.transpose() * plane_normals;
+	Eigen::MatrixXd tr = plane_normals.transpose();
+
+	angle_diff = Eigen::MatrixXd::Ones(N, N) + tr * plane_normals;
 	angle_diff /= 2.0;  // rescale to [0, 1]
 
 	// dist_diff
@@ -31,7 +35,7 @@ void CalculateDiffPlane2Plane(const Eigen::Ref<Eigen::MatrixXd>& plane_normals,
 	rep_vectors_1.resize(D, N * N);
 	Eigen::MatrixXd rep_vectors_2 = plane_centeral_points.transpose().replicate(N, 1);
 	Eigen::MatrixXd diff_vectors = -rep_vectors_1 + rep_vectors_2.transpose();  // Dim:[D, N*N]
-	Eigen::MatrixXd aug_dist_diff = plane_normals.transpose() * diff_vectors;  // Dim:[N, N*N]
+	Eigen::MatrixXd aug_dist_diff = tr * diff_vectors;  // Dim:[N, N*N]
 	dist_diff = Eigen::MatrixXd::Zero(N, N);
 
 	for (int i = 0; i < N; i++) {
@@ -97,14 +101,17 @@ void CalculateDiffPlane2Surf(const Eigen::Ref<Eigen::MatrixXd>& plane_normals,
     int D = plane_normals.rows();
 	int N1 = plane_normals.cols();
 	int N2 = surf_directions.cols();
-	angle_diff = plane_normals.transpose() * surf_directions;
+
+	Eigen::MatrixXd tr = plane_normals.transpose();
+
+	angle_diff = tr * surf_directions;
 	angle_diff = angle_diff.cwiseAbs();
 
 	Eigen::MatrixXd rep_vectors_1 = plane_centeral_points.replicate(N2, 1);
 	rep_vectors_1.resize(D, N1 * N2);
 	Eigen::MatrixXd rep_vectors_2 = surf_centeral_points.replicate(1, N1);
 	Eigen::MatrixXd diff_vectors = rep_vectors_1 - rep_vectors_2;  // Dim:[D, N1*N2]
-	Eigen::MatrixXd aug_dist_diff = plane_normals.transpose() * diff_vectors;  // Dim:[N1, N1*N2]
+	Eigen::MatrixXd aug_dist_diff = tr * diff_vectors;  // Dim:[N1, N1*N2]
 
 	dist_diff = Eigen::MatrixXd::Zero(N1, N2);
 
@@ -216,17 +223,27 @@ bool SpatialMatchingCheck(const Eigen::Ref<Eigen::MatrixXd>& boundary_points_1,
 
 	bool matched = true;
 
-	Eigen::Vector3d edge_k_0 = boundary_points_1.col(0) - boundary_points_1.col(1);
-	Eigen::Vector3d edge_k_1 = boundary_points_1.col(1) - boundary_points_1.col(2);
+	Eigen::Vector3d b1 = boundary_points_1.col(0);
+	Eigen::Vector3d b2 = boundary_points_1.col(1);
+	Eigen::Vector3d b3 = boundary_points_1.col(2);
+
+	Eigen::Vector3d edge_k_0 = b1 - b2;
+	Eigen::Vector3d edge_k_1 = b2 - b3;
 	Eigen::Vector3d normal = edge_k_0.cross(edge_k_1);
 	
 	if (normal.norm() != 0) {
         normal /= normal.norm();
 		for (int k = 0; k < K1 - 1; k++) {
-			Eigen::Vector3d edge_k = boundary_points_1.col(k) - boundary_points_1.col(k + 1);//:[D,1]
+			Eigen::Vector3d b_k = boundary_points_1.col(k);
+			Eigen::Vector3d b_k1 = boundary_points_1.col(k + 1);
+
+			Eigen::Vector3d edge_k = b_k - b_k1;//:[D,1]
 			Eigen::MatrixXd normal_k = normal.cross(edge_k);
-			Eigen::MatrixXd projection_i = normal_k.transpose() * boundary_points_1; // Dim:[1,K]
-			Eigen::MatrixXd projection_j = normal_k.transpose() * boundary_points_2;
+
+			Eigen::MatrixXd k_tr = normal_k.transpose();
+
+			Eigen::MatrixXd projection_i = k_tr * boundary_points_1; // Dim:[1,K]
+			Eigen::MatrixXd projection_j = k_tr * boundary_points_2;
 			
             double max_1 = projection_i.maxCoeff();
             double max_2 = projection_j.maxCoeff();
@@ -238,10 +255,16 @@ bool SpatialMatchingCheck(const Eigen::Ref<Eigen::MatrixXd>& boundary_points_1,
 		}
 
 		for (int k = 0; k < K2 - 1; k++) {
-			Eigen::Vector3d edge_k = boundary_points_2.col(k) - boundary_points_2.col(k + 1);//:[D,1]
+			Eigen::Vector3d b_k = boundary_points_2.col(k);
+			Eigen::Vector3d b_k1 = boundary_points_2.col(k + 1);
+
+			Eigen::Vector3d edge_k = b_k - b_k1;//:[D,1]
 			Eigen::MatrixXd normal_k = normal.cross(edge_k);
-			Eigen::MatrixXd projection_i = normal_k.transpose() * boundary_points_1; // Dim:[1,K]
-			Eigen::MatrixXd projection_j = normal_k.transpose() * boundary_points_2;
+
+			Eigen::MatrixXd k_tr = normal_k.transpose();
+
+			Eigen::MatrixXd projection_i = k_tr * boundary_points_1; // Dim:[1,K]
+			Eigen::MatrixXd projection_j = k_tr * boundary_points_2;
 			double max_1 = projection_i.maxCoeff();
             double max_2 = projection_j.maxCoeff();
             double min_1 = projection_i.minCoeff();
@@ -270,17 +293,29 @@ bool SpatialMatchingCheckV2(const Eigen::Ref<Eigen::MatrixXd>& boundary_points_1
 
 	bool matched = true;
 
-	Eigen::Vector3d edge_k_0 = boundary_points_1.col(0) - boundary_points_1.col(1);
-	Eigen::Vector3d edge_k_1 = boundary_points_2.col(0) - boundary_points_2.col(1);
+	Eigen::Vector3d b0 = boundary_points_1.col(0);
+	Eigen::Vector3d b1 = boundary_points_1.col(1);
+
+	Eigen::Vector3d edge_k_0 = b0 - b1;
+
+	b0 = boundary_points_2.col(0);
+	b1 = boundary_points_2.col(1);
+	Eigen::Vector3d edge_k_1 = b0 - b1;
 	Eigen::Vector3d normal = edge_k_0.cross(edge_k_1);
 
 	if (normal.norm() != 0) {
         normal /= normal.norm();
 		for (int k = 0; k < 1; k++) {
-			Eigen::Vector3d edge_k = boundary_points_1.col(k) - boundary_points_1.col(k + 1);//:[D,1]
+			Eigen::Vector3d b_k = boundary_points_1.col(k);
+			Eigen::Vector3d b_k1 = boundary_points_1.col(k + 1);
+
+			Eigen::Vector3d edge_k = b_k - b_k1;//:[D,1]
 			Eigen::Vector3d normal_k = normal.cross(edge_k);
-			Eigen::MatrixXd projection_i = normal_k.transpose() * boundary_points_1; // Dim:[1,K]
-			Eigen::MatrixXd projection_j = normal_k.transpose() * boundary_points_2;
+
+			Eigen::MatrixXd k_tr = normal_k.transpose();
+
+			Eigen::MatrixXd projection_i = k_tr * boundary_points_1; // Dim:[1,K]
+			Eigen::MatrixXd projection_j = k_tr * boundary_points_2;
 			double max_1 = projection_i.maxCoeff();
             double max_2 = projection_j.maxCoeff();
             double min_1 = projection_i.minCoeff();
@@ -291,10 +326,16 @@ bool SpatialMatchingCheckV2(const Eigen::Ref<Eigen::MatrixXd>& boundary_points_1
 		}
 
 		for (int k = 0; k < 1; k++) {
-			Eigen::Vector3d edge_k = boundary_points_2.col(k) - boundary_points_2.col(k + 1);//:[D,1]
+			Eigen::Vector3d b_k = boundary_points_2.col(k);
+			Eigen::Vector3d b_k1 = boundary_points_2.col(k + 1);
+
+			Eigen::Vector3d edge_k = b_k - b_k1;//:[D,1]
 			Eigen::Vector3d normal_k = normal.cross(edge_k);
-			Eigen::MatrixXd projection_i = normal_k.transpose() * boundary_points_1; // Dim:[1,K]
-			Eigen::MatrixXd projection_j = normal_k.transpose() * boundary_points_2;
+
+			Eigen::MatrixXd k_tr = normal_k.transpose();
+
+			Eigen::MatrixXd projection_i = k_tr * boundary_points_1; // Dim:[1,K]
+			Eigen::MatrixXd projection_j = k_tr * boundary_points_2;
 			double max_1 = projection_i.maxCoeff();
             double max_2 = projection_j.maxCoeff();
             double min_1 = projection_i.minCoeff();
@@ -307,9 +348,15 @@ bool SpatialMatchingCheckV2(const Eigen::Ref<Eigen::MatrixXd>& boundary_points_1
 	else {
 		// If by any chance, the two surface are parallel to each other
 		for (int k = 0; k < 1; k++) {
-			Eigen::MatrixXd edge_k = boundary_points_1.col(k) - boundary_points_1.col(k + 1);//:[D,1]
-			Eigen::MatrixXd projection_i = edge_k.transpose() * boundary_points_1; // Dim:[1,K]
-			Eigen::MatrixXd projection_j = edge_k.transpose() * boundary_points_2;
+			Eigen::Vector3d b_k = boundary_points_1.col(k);
+			Eigen::Vector3d b_k1 = boundary_points_1.col(k + 1);
+
+			Eigen::MatrixXd edge_k = b_k - b_k1;//:[D,1]
+
+			Eigen::MatrixXd e_tr = edge_k.transpose();
+
+			Eigen::MatrixXd projection_i = e_tr * boundary_points_1; // Dim:[1,K]
+			Eigen::MatrixXd projection_j = e_tr * boundary_points_2;
 			double max_1 = projection_i.maxCoeff();
             double max_2 = projection_j.maxCoeff();
             double min_1 = projection_i.minCoeff();
@@ -320,9 +367,15 @@ bool SpatialMatchingCheckV2(const Eigen::Ref<Eigen::MatrixXd>& boundary_points_1
 		}
 
 		for (int k = 0; k < 1; k++) {
-			Eigen::MatrixXd edge_k = boundary_points_2.col(k) - boundary_points_2.col(k + 1);//:[D,1]
-			Eigen::MatrixXd projection_i = edge_k.transpose() * boundary_points_1; // Dim:[1,K]
-			Eigen::MatrixXd projection_j = edge_k.transpose() * boundary_points_2;
+			Eigen::Vector3d b_k = boundary_points_2.col(k);
+			Eigen::Vector3d b_k1 = boundary_points_2.col(k + 1);
+
+			Eigen::MatrixXd edge_k = b_k - b_k1;//:[D,1]
+
+			Eigen::MatrixXd e_tr = edge_k.transpose();
+
+			Eigen::MatrixXd projection_i = e_tr * boundary_points_1; // Dim:[1,K]
+			Eigen::MatrixXd projection_j = e_tr * boundary_points_2;
 			double max_1 = projection_i.maxCoeff();
             double max_2 = projection_j.maxCoeff();
             double min_1 = projection_i.minCoeff();
@@ -363,10 +416,17 @@ bool SpatialMatchingCheckV3(const Eigen::Ref<Eigen::Vector3d>& plane_normal,
 
     normal /= normal.norm();
 	for (int k = 0; k < K1 - 1; k++) {
-		Eigen::Vector3d edge_k = boundary_points_1.col(k) - boundary_points_1.col(k + 1);//:[D,1]
+		Eigen::Vector3d b_k = boundary_points_1.col(k);
+		Eigen::Vector3d b_k1 = boundary_points_1.col(k + 1);
+
+		Eigen::Vector3d edge_k = b_k - b_k1;//:[D,1]
 		Eigen::Vector3d normal_k = normal.cross(edge_k);
-		Eigen::MatrixXd projection_i = normal_k.transpose() * boundary_points_1; // Dim:[1,K]
-		Eigen::MatrixXd projection_j = normal_k.transpose() * boundary_points_2;
+
+		Eigen::MatrixXd k_tr = normal_k.transpose();
+
+		
+		Eigen::MatrixXd projection_i = k_tr * boundary_points_1; // Dim:[1,K]
+		Eigen::MatrixXd projection_j = k_tr * boundary_points_2;
 		double max_1 = projection_i.maxCoeff();
         double max_2 = projection_j.maxCoeff();
         double min_1 = projection_i.minCoeff();
@@ -377,10 +437,16 @@ bool SpatialMatchingCheckV3(const Eigen::Ref<Eigen::Vector3d>& plane_normal,
 	}
 
 	for (int k = 0; k < K2 - 1; k++) {
-		Eigen::Vector3d edge_k = boundary_points_2.col(k) - boundary_points_2.col(k + 1);//:[D,1]
+		Eigen::Vector3d b_k = boundary_points_2.col(k);
+		Eigen::Vector3d b_k1 = boundary_points_2.col(k + 1);
+
+		Eigen::Vector3d edge_k = b_k - b_k1;//:[D,1]
 		Eigen::Vector3d normal_k = normal.cross(edge_k);
-		Eigen::MatrixXd projection_i = normal_k.transpose() * boundary_points_1; // Dim:[1,K]
-		Eigen::MatrixXd projection_j = normal_k.transpose() * boundary_points_2;
+
+		Eigen::MatrixXd k_tr = normal_k.transpose();
+
+		Eigen::MatrixXd projection_i = k_tr * boundary_points_1; // Dim:[1,K]
+		Eigen::MatrixXd projection_j = k_tr * boundary_points_2;
 		double max_1 = projection_i.maxCoeff();
         double max_2 = projection_j.maxCoeff();
         double min_1 = projection_i.minCoeff();
@@ -409,8 +475,12 @@ projection_norms | Dim:[D, N2]
 bool GravitySupportCheck(const Eigen::Ref<Eigen::MatrixXd>& boundary_points,
 	                     const Eigen::Ref<Eigen::MatrixXd>& gravity_center,
 	                     const Eigen::Ref<Eigen::MatrixXd>& projection_norms) {
-    Eigen::MatrixXd projected_centers = gravity_center.transpose() * projection_norms;  // [1, N2]
-    Eigen::MatrixXd projected_points = boundary_points.transpose() * projection_norms;  // [N1, N2]
+
+	Eigen::MatrixXd g_tr = gravity_center.transpose();
+	Eigen::MatrixXd b_tr = boundary_points.transpose();
+
+	Eigen::MatrixXd projected_centers = g_tr * projection_norms;  // [1, N2]
+	Eigen::MatrixXd projected_points = b_tr * projection_norms;  // [N1, N2]
 
 	int N2 = projection_norms.cols();
 	for (int i = 0; i < N2; i++) {
@@ -436,7 +506,9 @@ void SupportingStatus(const Eigen::Ref<Eigen::MatrixXd>& plane_normals,
                       const Eigen::Ref<Eigen::MatrixXd>& gravity_direction,
                       Eigen::Ref<Eigen::MatrixXd> supporting_status) {
                       
-	supporting_status = gravity_direction.transpose() * plane_normals;  // Dim:[1, N]
+	Eigen::MatrixXd tr = gravity_direction.transpose();
+
+	supporting_status = tr * plane_normals;  // Dim:[1, N]
 
 	for (int i = 0; i < supporting_status.cols(); i++) {
 		double plane_angle = supporting_status(0, i);
@@ -468,7 +540,10 @@ void SupportingStatusV2(const Eigen::Ref<Eigen::MatrixXd>& surf_directions,
 	                    const Eigen::Ref<Eigen::MatrixXd>& gravity_direction,
 	                    Eigen::Ref<Eigen::MatrixXd> supporting_status) {
 	
-    supporting_status = gravity_direction.transpose() * surf_directions;
+	Eigen::MatrixXd tr = gravity_direction.transpose();
+
+
+    supporting_status = tr * surf_directions;
     // DisplayMatrix(supporting_status, "Supporting_Status");
 
 	double surf_threshold = support_direction_threshold2;

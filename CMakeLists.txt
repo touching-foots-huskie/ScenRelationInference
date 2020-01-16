@@ -2,15 +2,17 @@ cmake_minimum_required(VERSION 3.0)
 project(ScenRelationInference CXX C)
 
 set(CMAKE_CXX_STANDARD 17)
-SET(CMAKE_BUILD_TYPE "Debug")
+SET(CMAKE_BUILD_TYPE "Release")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall")
 
 ### install lib, only do that if *.c or *.cpp exist
 # since C srcs exist, use *.c* as pattern, not *.cpp
 
 # Eigen structure
-find_package (Eigen3 3.3 REQUIRED NO_MODULE)
+#find_package (Eigen3 3.3 REQUIRED NO_MODULE)
 
+
+include_directories(/usr/local/include/eigen3)
 # export cmake setting to the source code
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
@@ -24,8 +26,8 @@ add_library(scene_inference SHARED ${PROJECT_SOURCE_DIR}/src/scene_inference.cpp
 target_link_libraries(scene_inference geometry_feature parse_tool)
 
 add_executable(YCB_template ${PROJECT_SOURCE_DIR}/include/configuru.hpp ${PROJECT_SOURCE_DIR}/src/create_ycb_template.cpp)
-target_link_libraries(YCB_template Eigen3::Eigen parse_tool geometry_feature template_object scene_inference)
+target_link_libraries(YCB_template parse_tool geometry_feature template_object scene_inference)
 
 # linking with dependences
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCE_DIR}/src/main.cpp)
-target_link_libraries(${PROJECT_NAME} Eigen3::Eigen geometry_feature template_object parse_tool scene_inference pose_data_parse)
+target_link_libraries(${PROJECT_NAME} geometry_feature template_object parse_tool scene_inference pose_data_parse)
